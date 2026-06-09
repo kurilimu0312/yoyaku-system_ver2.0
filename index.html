@@ -22,24 +22,11 @@
         }
     </script>
     <style>
-        /* カスタムスクロールバー */
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-        .row-hover:hover {
-            background-color: #f8fafc !important;
-        }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .row-hover:hover { background-color: #f8fafc !important; }
     </style>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen font-sans flex flex-col antialiased">
@@ -47,11 +34,12 @@
     <script id="firebase-config-script">
         const firebaseConfig = {
             apiKey: "AIzaSyBKPgBROp1b-ONmSOc6qMRozs-_Pm5pbJ0",
+
   authDomain: "auto-rent-system-52efe.firebaseapp.com",
+
   projectId: "auto-rent-system-52efe",
+
   storageBucket: "auto-rent-system-52efe.firebasestorage.app",
-  messagingSenderId: "516757126612",
-  appId: "1:516757126612:web:2955f27d5266efbac86a41"
         };
     </script>
     <div id="cloud-lock-screen" class="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 z-[100] transition-all duration-300">
@@ -59,34 +47,15 @@
             <div id="lock-icon-container" class="w-16 h-16 rounded-full bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center text-2xl animate-bounce">
                 <i class="fa-solid fa-cloud-slash"></i>
             </div>
-            
             <div class="w-full">
                 <h2 class="text-lg font-bold text-slate-900 text-center">共有クラウド（Firebase）接続エラー</h2>
-                <div class="text-center mt-2">
-                    <span id="lock-status-badge" class="text-[10px] text-rose-600 bg-rose-50 px-2.5 py-1 rounded border border-rose-100 font-bold inline-block">
-                        AUTHENTICATION / DB ACCESS REQUIRED
-                    </span>
-                </div>
-                
-                <div id="lock-screen-reason" class="text-xs text-slate-600 mt-5 leading-relaxed bg-slate-50 p-5 rounded-xl border border-slate-150 text-left max-h-[250px] overflow-y-auto">
-                    現在、複数端末の同期用クラウド（Firebase）に正しく接続されていません。
+                <div id="lock-screen-reason" class="text-xs text-slate-600 mt-5 leading-relaxed bg-slate-50 p-5 rounded-xl border border-slate-150 text-left">
+                    現在、複数端末の同期用クラウドに接続されていません。
                 </div>
             </div>
-            
-            <div class="flex flex-col w-full gap-2">
-                <button onclick="bypassLockToLocalMode()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 active:scale-98 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-2 border border-slate-700 cursor-pointer">
-                    <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Firebaseなしで試す（ローカル体験モードへ）
-                </button>
-            </div>
-
-            <div class="w-full border-t border-slate-150 pt-4 text-left text-[11px] text-slate-400">
-                <p class="font-bold text-slate-600 mb-1">【複数台で完全共有する管理担当者の方へ】</p>
-                <ol class="list-decimal pl-4 space-y-1">
-                    <li>HTMLファイルを右クリック ＞ 「メモ帳」などのテキストエディタで開く。</li>
-                    <li>上部付近にある「firebaseConfig」欄にご自身のFirebase接続キーをそのまま上書き貼り付け。</li>
-                    <li>上書き保存し、再度アプリを起動してください。</li>
-                </ol>
-            </div>
+            <button onclick="bypassLockToLocalMode()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Firebaseなしで試す（ローカル体験モード）
+            </button>
         </div>
     </div>
 
@@ -100,1426 +69,281 @@
                     <div>
                         <div class="flex items-center gap-1.5">
                             <h1 class="text-lg font-black tracking-tight">予約状況 自動管理 system</h1>
-                            <span id="live-badge" class="text-[9px] text-amber-500 font-bold bg-amber-950/80 px-2.5 py-0.5 rounded border border-amber-900 flex items-center gap-1">
-                                <i class="fa-solid fa-circle"></i> SINGLE RUN
-                            </span>
+                            <span id="live-badge" class="text-[9px] text-amber-500 font-bold bg-amber-950/80 px-2.5 py-0.5 rounded border border-amber-900">SINGLE RUN</span>
                         </div>
-                        <p class="text-[10px] text-slate-400 mt-0.5">複数端末リアルタイム同期・シンセ音通知・待合室サイネージ連動</p>
                     </div>
                 </div>
                 
+                <div id="mobile-bell-area" class="hidden md:flex items-center">
+                    <button onclick="requestMobileNotification()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-900 text-xs font-black px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-amber-400">
+                        <i class="fa-solid fa-bell animate-bounce"></i> 📲 このスマホの通知をONにする
+                    </button>
+                </div>
+
                 <div class="flex items-center gap-2 flex-wrap">
-                    <button onclick="addEmptyReservation()" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-emerald-500">
-                        <i class="fa-solid fa-plus"></i> 予約を直接追加
-                    </button>
-                    <button id="import-excel-btn" onclick="openImportModal()" class="bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-blue-500">
-                        <i class="fa-solid fa-file-import"></i> エクセルから貼り付け
-                    </button>
-                    <button onclick="launchMonitorWindow()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer">
-                        <i class="fa-solid fa-desktop text-emerald-400"></i> 📺 モニター画面を別窓で開く
-                    </button>
-                    <button onclick="confirmClearData()" class="bg-slate-800 hover:bg-rose-950 hover:text-rose-200 border border-slate-700 text-slate-400 text-xs font-bold px-3 py-2.5 rounded-xl transition flex items-center gap-1.5 ml-auto cursor-pointer">
-                        <i class="fa-solid fa-trash-can text-[11px]"></i> 本日のデータをクリア
-                    </button>
+                    <button onclick="addEmptyReservation()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-plus"></i> 直接追加</button>
+                    <button onclick="openImportModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-file-import"></i> エクセル貼り付け</button>
+                    <button onclick="launchMonitorWindow()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-desktop text-emerald-400"></i> 📺 モニター画面</button>
                 </div>
             </div>
         </header>
 
         <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
-            
-            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-lg shrink-0">
-                        <i class="fa-solid fa-list-check"></i>
-                    </div>
-                    <div>
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">本日の総予約数</span>
-                        <span id="stat-total" class="text-2xl font-black text-slate-800">0</span> <span class="text-xs text-slate-400 font-medium">件</span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0">
-                        <i class="fa-solid fa-user-nurse animate-pulse"></i>
-                    </div>
-                    <div>
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">ただいま対応中</span>
-                        <span id="stat-active" class="text-2xl font-black text-amber-600 animate-pulse">0</span> <span class="text-xs text-slate-400 font-medium">件</span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0 border border-emerald-100">
-                        <i class="fa-solid fa-clipboard-check"></i>
-                    </div>
-                    <div>
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">出発完了</span>
-                        <span id="stat-completed" class="text-2xl font-black text-emerald-600">0</span> <span class="text-xs text-slate-400 font-medium">件</span>
-                    </div>
-                </div>
-
-                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-center gap-2">
-                    <div class="flex items-center gap-4 w-full">
-                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0 border border-indigo-100">
-                            <i class="fa-solid fa-chart-line"></i>
-                        </div>
-                        <div class="flex-1">
-                            <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">進捗率（出発完了率）</span>
-                            <div class="flex items-baseline gap-1">
-                                <span id="stat-progress" class="text-2xl font-black text-indigo-600">0</span>
-                                <span class="text-xs text-slate-400 font-bold">%</span>
-                                <span id="stat-progress-count" class="text-[11px] text-slate-400 ml-1.5 font-bold tracking-tight">( 0 / 0 件 )</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2 mt-1 overflow-hidden border border-slate-200/50">
-                        <div id="stat-progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-700 ease-out" style="width: 0%"></div>
-                    </div>
-                </div>
-            </section>
-
             <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
-                <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
                     <div class="flex items-center gap-2">
-                        <span id="table-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"></span>
-                        <h2 id="table-title" class="text-xs font-black text-slate-700 tracking-wider uppercase">ローカル一時保存シート</h2>
+                        <span id="table-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+                        <h2 id="table-title" class="text-xs font-black text-slate-700 tracking-wider uppercase">データシート</h2>
                     </div>
-                    <div class="flex items-center gap-2">
-                        <div id="sync-indicator" class="text-[10px] text-amber-600 bg-amber-50 border border-amber-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-bold">
-                            <i class="fa-solid fa-database"></i> ブラウザ内のみで保存中
-                        </div>
-                        <span class="text-[10px] text-slate-400 bg-white border border-slate-200 px-2.5 py-1 rounded-lg">行数: <span id="row-count" class="font-bold">0</span>件</span>
-                    </div>
+                    <div id="sync-indicator" class="text-[10px] text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg">読み込み中...</div>
                 </div>
 
                 <div class="flex-1 overflow-x-auto min-h-[400px]">
                     <table class="w-full text-left border-collapse table-fixed min-w-[1740px]">
                         <thead>
                             <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider font-bold">
-                                <th class="p-4 w-16 text-center border-r border-slate-800 font-bold">来店</th>
-                                <th class="p-4 w-16 text-center border-r border-slate-800 font-bold">出発済</th>
-                                <th class="p-4 w-24 text-center border-r border-slate-800 font-bold">予約時間</th>
-                                <th class="p-4 w-48 text-center border-r border-slate-800 font-bold">お客様名</th>
-                                <th class="p-4 w-52 text-center border-r border-slate-800 font-bold">配車住所</th>
-                                <th class="p-4 w-36 text-center border-r border-slate-800 font-bold">車種</th>
-                                <th class="p-4 w-32 text-center border-r border-slate-800 font-bold">車番</th>
-                                <th class="p-4 w-28 text-center border-r border-slate-800 font-bold">在庫</th> <th class="p-4 w-80 text-center border-r border-slate-800 font-bold">備考</th>
-                                <th class="p-4 w-36 text-center border-r border-slate-800 font-bold">返却店舗</th>
-                                <th class="p-4 w-36 text-center border-r border-slate-800 font-bold">添付品1</th>
-                                <th class="p-4 w-36 text-center border-r border-slate-800 font-bold">添付品2</th>
-                                <th class="p-4 w-36 text-center border-r border-slate-800 font-bold">添付品3</th>
+                                <th class="p-4 w-16 text-center font-bold">来店</th>
+                                <th class="p-4 w-16 text-center font-bold">出発済</th>
+                                <th class="p-4 w-24 text-center font-bold">予約時間</th>
+                                <th class="p-4 w-48 text-center font-bold">お客様名</th>
+                                <th class="p-4 w-52 text-center font-bold">配車住所</th>
+                                <th class="p-4 w-36 text-center font-bold">車種</th>
+                                <th class="p-4 w-32 text-center font-bold">車番</th>
+                                <th class="p-4 w-28 text-center font-bold">在庫</th>
+                                <th class="p-4 w-80 text-center font-bold">備考</th>
+                                <th class="p-4 w-36 text-center font-bold">返却店舗</th>
+                                <th class="p-4 w-36 text-center font-bold">添付品1</th>
+                                <th class="p-4 w-36 text-center font-bold">添付品2</th>
+                                <th class="p-4 w-36 text-center font-bold">添付品3</th>
                                 <th class="p-4 w-16 text-center font-bold">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="table-body" class="divide-y divide-slate-150 text-xs">
-                            </tbody>
+                        <tbody id="table-body" class="divide-y divide-slate-150 text-xs"></tbody>
                     </table>
-                    
-                    <div id="no-data-view" class="hidden flex flex-col items-center justify-center py-24 px-4 text-center">
-                        <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xl mb-4">
-                            <i class="fa-solid fa-file-excel"></i>
-                        </div>
-                        <h3 class="text-sm font-bold text-slate-800">予約データがありません</h3>
-                        <p id="no-data-desc" class="text-xs text-slate-400 mt-1 max-w-sm leading-relaxed">上の「予約を直接追加」で手入力するか、「エクセルから貼り付け」ボタンでデータを投入してください。</p>
-                    </div>
                 </div>
             </section>
         </main>
     </div>
 
-    <div id="monitor-view" class="hidden fixed inset-0 bg-zinc-950 text-white flex flex-col z-50">
-        <header class="bg-zinc-900 border-b border-zinc-800 px-8 py-5 flex items-center justify-between shrink-0">
-            <div class="flex items-center gap-3">
-                <i class="fa-solid fa-circle-play text-emerald-500 animate-pulse text-lg"></i>
-                <h1 class="text-lg font-black tracking-widest">本日の作業進行状況 (リアルタイム連動)</h1>
-            </div>
-            <button onclick="closeMonitorMode()" class="bg-zinc-800 hover:bg-zinc-700 text-xs font-bold px-4 py-2 rounded-lg transition border border-zinc-700 cursor-pointer">
-                <i class="fa-solid fa-arrow-left mr-1.5"></i> 管理画面に戻る
-            </button>
-        </header>
-        <main class="flex-1 p-8 flex flex-col overflow-hidden max-w-7xl w-full mx-auto">
-            <div class="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden flex flex-col">
-                <table class="w-full text-left border-collapse table-fixed">
-                    <thead>
-                        <tr class="bg-zinc-800 text-zinc-400 text-xs tracking-widest font-bold border-b border-zinc-700">
-                            <th class="p-5 w-[15%] text-center">状況</th>
-                            <th class="p-5 w-[15%]">予約時間</th>
-                            <th class="p-5 w-[25%]">お客様名</th>
-                            <th class="p-5 w-[25%]">ご愛車</th>
-                            <th class="p-5 w-[20%]">お車番号</th>
-                        </tr>
-                    </thead>
-                    <tbody id="monitor-table-body" class="divide-y divide-zinc-800 text-base font-medium">
-                        </tbody>
-                </table>
-            </div>
-        </main>
-    </div>
-
-    <div id="import-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 transition-opacity duration-200">
-        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transform scale-95 transition-transform duration-200">
-            <div class="bg-slate-900 text-white p-5 flex items-center justify-between border-b border-slate-800">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-file-excel text-emerald-400 text-lg"></i>
-                    <div>
-                        <h3 id="import-title" class="text-sm font-bold">エクセルデータ一括クラウド保存</h3>
-                        <p class="text-[10px] text-slate-400">エクセル一覧を貼り付けると、すべての共有端末の画面に即座に反映されます</p>
-                    </div>
-                </div>
-                <button onclick="closeImportModal()" class="text-slate-400 hover:text-white transition text-lg cursor-pointer">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            
-            <div class="p-6 flex flex-col gap-4">
-                <div class="text-xs text-slate-600 leading-relaxed">
-                    <p class="mb-1 font-bold text-slate-800">【貼り付け手順】エクセルを開き、以下の見出しが含まれる行をまとめてコピーし、下の枠に貼り付け（Ctrl + V）してください。</p>
-                    <p class="text-slate-500 text-[11px] leading-relaxed">
-                        <b>対応する列名：</b> 予約時間 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">出発予定年月日時分</span> | お客様名 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">借受人名</span> | 配車住所 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">配車予定住所</span> | 車種 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">車名</span> | 車番 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">登録№（表示用）</span> | 在庫 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">在庫営業店舗名</span> | 備考 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">連絡事項</span> | 返却店舗 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">帰着予定営業店舗名</span> | 添付品名 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">添付品名１ / ２ / ３</span> | 添付品個数 ➡ <span class="bg-slate-100 px-1 rounded text-blue-600 font-mono">添付品個数１ / ２ / ３</span>
-                    </p>
-                </div>
-                
-                <textarea id="import-area" oninput="previewImport()" placeholder="例（見出し行を必ず含めてください）：&#13;出発予定年月日時分	借受人名	配車予定住所	車名	登録№（表示用）	在庫営業店舗名	連絡事項	帰着予定営業店舗名	添付品名１	添付品個数１	添付品名２	添付品個数２&#13;2026/05/27 09:00	サトウ商事	東京都千代田区1-1	ヤリス（白）	豊橋300 あ 12-34	西口広場前店	車検整備	東京駅前店	代車あり	1	カーナビ	1..." class="w-full h-40 p-4 border border-slate-200 rounded-xl font-mono text-[11px] focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 bg-slate-50 resize-none"></textarea>
-                
-                <div class="bg-slate-50 p-4 border rounded-xl">
-                    <h4 class="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">自動検知された列マッピング</h4>
-                    <div id="mapping-preview" class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px]">
-                        </div>
-                </div>
-            </div>
-
-            <div class="bg-slate-50 p-4 border-t border-slate-200 flex justify-end gap-2">
-                <button onclick="closeImportModal()" class="px-4 py-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-100 text-xs font-bold rounded-lg transition cursor-pointer">
-                    キャンセル
-                </button>
-                <button onclick="processExcelImport()" id="import-submit-btn" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition shadow cursor-pointer">
-                    クラウドに保存して展開
-                </button>
+    <div id="import-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border p-6 flex flex-col gap-4">
+            <textarea id="import-area" oninput="previewImport()" placeholder="ここにエクセルデータを貼り付け..." class="w-full h-40 p-4 border rounded-xl font-mono text-[11px] bg-slate-50 resize-none"></textarea>
+            <div class="flex justify-end gap-2">
+                <button onclick="closeImportModal()" class="px-4 py-2 bg-white border text-slate-700 text-xs font-bold rounded-lg">キャンセル</button>
+                <button onclick="processExcelImport()" class="px-5 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow">一斉反映</button>
             </div>
         </div>
-    </div>
-
-    <div id="clear-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-        <div class="bg-white max-w-sm w-full rounded-2xl shadow-xl border p-6 flex flex-col gap-4 text-center">
-            <div class="w-12 h-12 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center text-lg mx-auto">
-                <i class="fa-solid fa-triangle-exclamation"></i>
-            </div>
-            <div>
-                <h3 class="font-bold text-slate-800 text-sm">共有データをすべて消去しますか？</h3>
-                <p id="clear-modal-desc" class="text-xs text-slate-400 mt-1 leading-relaxed">この操作を行うと、現在蓄積されているデータをすべてクリアします。</p>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="closeClearModal()" class="flex-1 py-2 border rounded-lg hover:bg-slate-100 text-xs font-bold transition text-slate-700 cursor-pointer">やめる</button>
-                <button onclick="clearAllData()" class="flex-1 py-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold rounded-lg transition shadow cursor-pointer">一斉消去する</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2 transition transform translate-y-20 opacity-0 pointer-events-none duration-300 z-50">
-        <i class="fa-solid fa-circle-check text-emerald-400"></i>
-        <span id="toast-msg">通知メッセージ</span>
     </div>
 
     <script type="module">
-        // --- Firebase SDK のインポート ---
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
         import { getFirestore, doc, setDoc, collection, onSnapshot, writeBatch, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // --- グローバル同期用状態 ---
         let reservations = [];
-        let broadcastChannel = null;
         let currentUser = null;
         let lastArrivalState = {}; 
-        
         let db = null;
         let auth = null;
         let appId = 'default-app-id';
         let isCloudMode = false; 
 
-        const CHANNEL_NAME = 'reservation_tv_pro_v1';
+        // 🌟【1枚完結通知システム】ブラウザが通知を受け取れる状態かチェック
+        function checkNotificationSystem() {
+            const bellArea = document.getElementById('mobile-bell-area');
+            if ('Notification' in window) {
+                bellArea.classList.remove('hidden'); // ボタンを表示
+                if (Notification.permission === 'granted') {
+                    bellArea.innerHTML = `<span class="text-xs font-bold text-emerald-400 bg-emerald-950 px-3 py-1.5 rounded-xl border border-emerald-900"><i class="fa-solid fa-circle-check"></i> スマホ通知連動中</span>`;
+                }
+            }
+        }
 
-        // --- 📋 「在庫」を追加し、キーワードに「在庫営業店舗名」を指定 ---
-        const headerKeywords = {
-            time: ["出発予定年月日時分", "予約時間", "時間", "時刻"],
-            company: ["借受人名", "お客様名", "会社名", "会社", "企業名"],
-            name: ["配車予定住所", "配車住所", "住所", "配車先"],
-            carType: ["車名", "車種名", "車種", "ご愛車"],
-            carNum: ["登録№（表示用）", "登録№", "登録番号", "車両ナンバー", "車番", "ナンバー"],
-            stock: ["在庫営業店舗名", "在庫", "保管場所"], 
-            memo: ["連絡事項", "整備作業内容（備考）", "作業内容", "備考", "内容"],
-            returnStore: ["帰着予定営業店舗名", "帰着店舗", "返却店舗", "帰着予定営業所"],
-            attach1: ["添付品名１", "添付品1", "添付品名1"],
-            attach1Num: ["添付品個数１", "添付品個数1", "添付個数1"],
-            attach2: ["添付品名２", "添付品2", "添付品名2"],
-            attach2Num: ["添付品個数２", "添付品個数2", "添付個数2"],
-            attach3: ["添付品名３", "添付品3", "添付品名3"],
-            attach3Num: ["添付品個数３", "添付品個数3", "添付個数3"]
+        // 🌟【1枚完結通知システム】ボタンが押されたらスマホに許可を求める
+        window.requestMobileNotification = function() {
+            Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                    alert('通知の連携に成功しました！スマホがスリープでも振動とポップアップで通知が届きます。');
+                    new Notification("CLOUD PRO", { body: "通知連動テストに成功しました！" });
+                    checkNotificationSystem();
+                } else {
+                    alert('通知が拒否されました。スマホの設定からブラウザの通知許可をオンにしてください。');
+                }
+            });
         };
 
-        // --- 🔒 自律診断トラブルシューター機能付き 環境判定ロジック ---
-        function setupEnvironment() {
-            let config = null;
-            let hasConfig = false;
-
-            try {
-                if (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.apiKey && firebaseConfig.apiKey !== "YOUR_API_KEY") {
-                    config = firebaseConfig;
-                    hasConfig = true;
-                }
-            } catch (e) {
-                console.error("Config check syntax error caught:", e);
-                showDiagnosticError("config-syntax", "<code>firebaseConfig</code> のコード記述フォーマットに致命的なエラーが発生しています。<br><br><span class=\"text-rose-500 font-bold\">【💡自動保護機能が作動中】</span><br>設定に間違いがあっても、システムが停止しないように隔離されました。下の「Firebaseなしで試す」ボタンから起動可能です。");
-                return;
-            }
-
-            const hasEnvConfig = typeof __firebase_config !== 'undefined' && __firebase_config;
-            
-            if (hasConfig || hasEnvConfig) {
+        // 🌟【1枚完結通知システム】バックグラウンド・スリープ時でも強制プッシュ通知を出す関数
+        function firePushNotification(clientName) {
+            if ('Notification' in window && Notification.permission === 'granted') {
                 try {
-                    if (hasConfig) {
-                        appId = config.projectId || 'my-app-id';
-                    } else {
-                        config = JSON.parse(__firebase_config);
-                        appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-                    }
+                    // バイブレーションと音を伴う公式ポップアップ通知
+                    const notification = new Notification("【CLOUD PRO】来店通知", {
+                        body: `${clientName} 様がご来店されました。確認してください！`,
+                        icon: "https://via.placeholder.com/192/007bff/ffffff?text=CP",
+                        tag: "visit-alert",
+                        renotify: true
+                    });
                     
-                    const app = initializeApp(config);
+                    // Android等のバイブ強制作動
+                    if ('vibrate' in navigator) {
+                        navigator.vibrate([300, 100, 300, 100, 300]); 
+                    }
+                } catch (e) {
+                    console.log("Notification error caught", e);
+                }
+            }
+        }
+
+        // --- Firebase 環境判定 ---
+        function setupEnvironment() {
+            if (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.apiKey) {
+                try {
+                    appId = firebaseConfig.projectId;
+                    const app = initializeApp(firebaseConfig);
                     auth = getAuth(app);
                     db = getFirestore(app);
                     isCloudMode = true;
-                    
-                    hideSecurityLock();
-                    switchToCloudUI();
+                    document.getElementById('cloud-lock-screen').classList.add('hidden');
+                    document.getElementById('admin-view').classList.remove('pointer-events-none');
+                    document.getElementById('admin-view').style.opacity = "1";
+                    checkNotificationSystem();
                 } catch (e) {
-                    console.error("Firebase Initialization Failed: ", e);
-                    showDiagnosticError("config-syntax", "<code>firebaseConfig</code> のフォーマットに間違いがある可能性があります。");
+                    bypassLockToLocalMode();
                 }
             } else {
-                showDiagnosticError("config-empty", "まだFirebase接続情報（config）が貼り付けられていないか、仮のままになっています。");
+                bypassLockToLocalMode();
             }
         }
 
-        // 🔍 詳細な接続自己診断・エラー表示関数
-        function showDiagnosticError(errCode, customDetail = "") {
-            isCloudMode = false;
-            const lockScreen = document.getElementById('cloud-lock-screen');
-            const adminView = document.getElementById('admin-view');
-            const reasonEl = document.getElementById('lock-screen-reason');
-            const lockIcon = document.getElementById('lock-icon-container');
-            const lockBadge = document.getElementById('lock-status-badge');
-            
-            if (lockIcon) {
-                lockIcon.className = "w-16 h-16 rounded-full bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center text-2xl animate-pulse";
-                lockIcon.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i>`;
-            }
-            if (lockBadge) {
-                lockBadge.textContent = "DIAGNOSTIC CRITICAL ERROR";
-                lockBadge.className = "text-[10px] text-rose-600 bg-rose-50 px-2.5 py-1 rounded border border-rose-100 font-bold inline-block";
-            }
-
-            let diagnosticHTML = `<b>【接続診断結果】</b><br>${customDetail}<br><br>`;
-
-            if (errCode === "auth/operation-not-allowed") {
-                diagnosticHTML += `
-                    <div class="bg-amber-50 text-amber-900 p-4 rounded-lg border border-amber-200 mt-2">
-                        <p class="font-bold mb-1"><i class="fa-solid fa-lightbulb"></i> 解決手順：匿名認証（Anonymous）が無効です</p>
-                        <ol class="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Google Firebaseコンソール ＞ <b>Authentication（認証）</b> を開きます。</li>
-                            <li><b>「Sign-in method」</b> タブを開きます。</li>
-                            <li><b>「匿名（Anonymous）」</b> を有効（ON）にして保存します。</li>
-                        </ol>
-                    </div>
-                `;
-            } else if (errCode === "permission-denied") {
-                diagnosticHTML += `
-                    <div class="bg-amber-50 text-amber-900 p-4 rounded-lg border border-amber-200 mt-2">
-                        <p class="font-bold mb-1"><i class="fa-solid fa-lightbulb"></i> 解決手順：データベースルール拒否です</p>
-                        <ol class="list-decimal pl-4 space-y-1 text-[11px] leading-relaxed">
-                            <li>Firebase ＞ <b>Firestore Database</b> ＞ <b>「ルール（Rules）」</b> タブを開きます。</li>
-                            <li>テスト用に書き込み許可ルールが <code>allow read, write: if true;</code> になっているかご確認ください。</li>
-                        </ol>
-                    </div>
-                `;
-            } else if (errCode === "config-empty") {
-                diagnosticHTML += `
-                    <p class="text-[11px] text-slate-500 mt-2 leading-relaxed">
-                        複数台リアルタイム同期を行う場合は、HTMLコードの上部にある <code>firebaseConfig</code> 欄を接続キーに書き換えてください。「ローカル体験モード」で即座に開始することも可能です。
-                    </p>
-                `;
-            }
-
-            if (reasonEl) {
-                reasonEl.innerHTML = diagnosticHTML;
-            }
-            
-            if (lockScreen) {
-                lockScreen.classList.remove('hidden');
-                lockScreen.style.opacity = "1";
-            }
-            if (adminView) {
-                adminView.classList.add('pointer-events-none');
-                adminView.style.opacity = "0.2";
-            }
-            setSyncStatus(false, "接続ブロック中...", true);
-        }
-
-        // ロックをバイパスしてローカル動作モードへ移行
-        function bypassLockToLocalMode() {
-            isCloudMode = false;
-            hideSecurityLock();
-            loadLocalData();
-            switchToLocalUI();
-            showToast("ローカル体験モードで起動しました！データをブラウザ内に自動保存します。");
-        }
-
-        function switchToLocalUI() {
-            const badge = document.getElementById('live-badge');
-            const iconBadge = document.getElementById('connection-badge-icon');
-            const tableTitle = document.getElementById('table-title');
-            const tableIndicator = document.getElementById('table-indicator');
-            const importBtn = document.getElementById('import-excel-btn');
-            
-            if (badge) {
-                badge.innerHTML = '<i class="fa-solid fa-circle"></i> SINGLE RUN (DEMO)';
-                badge.className = "text-[9px] text-amber-500 font-bold bg-amber-950/80 px-2.5 py-0.5 rounded border border-amber-900 flex items-center gap-1";
-            }
-            if (iconBadge) {
-                iconBadge.className = "bg-amber-600 text-white p-2.5 rounded-xl shadow-lg flex items-center justify-center";
-                iconBadge.innerHTML = '<i class="fa-solid fa-database text-xl"></i>';
-            }
-            if (tableTitle) {
-                tableTitle.textContent = "ローカル一時保存シート";
-            }
-            if (tableIndicator) {
-                tableIndicator.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse";
-            }
-            if (importBtn) {
-                importBtn.className = "bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 border border-blue-500 cursor-pointer";
-            }
-            setSyncStatus(false, "ブラウザ内のみで保存中");
-        }
-
-        function switchToCloudUI() {
-            const badge = document.getElementById('live-badge');
-            const iconBadge = document.getElementById('connection-badge-icon');
-            const tableTitle = document.getElementById('table-title');
-            const tableIndicator = document.getElementById('table-indicator');
-            const importBtn = document.getElementById('import-excel-btn');
-            
-            if (badge) {
-                badge.innerHTML = '<i class="fa-solid fa-circle animate-pulse"></i> CLOUD LIVE';
-                badge.className = "text-[9px] text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-0.5 rounded border border-emerald-900 flex items-center gap-1";
-            }
-            if (iconBadge) {
-                iconBadge.className = "bg-indigo-600 text-white p-2.5 rounded-xl shadow-lg flex items-center justify-center";
-                iconBadge.innerHTML = '<i class="fa-solid fa-cloud text-xl animate-pulse"></i>';
-            }
-            if (tableTitle) {
-                tableTitle.textContent = "リアルタイムクラウド共有シート";
-            }
-            if (tableIndicator) {
-                tableIndicator.className = "w-2.5 h-2.5 rounded-full bg-indigo-600 animate-pulse";
-            }
-            if (importBtn) {
-                importBtn.className = "bg-blue-600 hover:bg-blue-700 active:scale-95 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 border border-blue-500 cursor-pointer";
-            }
-            setSyncStatus(true, "クラウド同期LIVE完了");
-        }
-
-        // --- ローカル用データの読込・保存 ---
-        function loadLocalData() {
-            try {
-                const localData = localStorage.getItem('local_reservations_v1');
-                if (localData) {
-                    reservations = JSON.parse(localData);
-                } else {
-                    reservations = [];
-                }
-                renderTable();
-                updateStats();
-                sendDataToMonitor();
-            } catch (e) {
-                console.error("Local load error: ", e);
-                reservations = [];
-            }
-        }
-
-        function saveLocalData() {
-            try {
-                localStorage.setItem('local_reservations_v1', JSON.stringify(reservations));
-                sendDataToMonitor();
-            } catch (e) {
-                console.error("Local save error: ", e);
-            }
-        }
-
-        function hideSecurityLock() {
-            const lockScreen = document.getElementById('cloud-lock-screen');
-            const adminView = document.getElementById('admin-view');
-            
-            if (lockScreen) {
-                lockScreen.classList.add('hidden');
-            }
-            if (adminView) {
-                adminView.classList.remove('pointer-events-none');
-                adminView.style.opacity = "1";
-            }
-        }
-
-        // --- 認証初期化 ---
-        async function initAuth() {
-            if (!isCloudMode) return;
-            setSyncStatus(false, "クラウドに安全接続中...");
-            try {
-                await signInAnonymously(auth);
-            } catch (err) {
-                console.error("Auth Error: ", err);
-                showDiagnosticError(err.code, "Firebase Authentication の認証段階で接続が拒否されました。");
-            }
-        }
-
-        // --- リアルタイム同期（クラウド専用） ---
+        // リアルタイムクラウド同期
         function initRealtimeSync() {
-            if (isCloudMode) {
-                onAuthStateChanged(auth, (user) => {
-                    currentUser = user;
-                    if (user) {
-                        const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
-                        onSnapshot(collectionRef, (snapshot) => {
-                            const updatedReservations = [];
-                            snapshot.forEach((doc) => {
-                                updatedReservations.push({ id: doc.id, ...doc.data() });
-                            });
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
+                    onSnapshot(collectionRef, (snapshot) => {
+                        const updated = [];
+                        snapshot.forEach((doc) => { updated.push({ id: doc.id, ...doc.data() }); });
 
-                            detectNewArrivals(updatedReservations);
-
-                            reservations = updatedReservations;
-                            renderTable();
-                            updateStats();
-                            sendDataToMonitor();
-                            setSyncStatus(true, "クラウド同期LIVE完了");
-                        }, (error) => {
-                            console.error("Firestore onSnapshot error: ", error);
-                            showDiagnosticError(error.code, "Firestoreへの書き込みアクセスが拒否されました。");
+                        // 🌟データが更新された際、新しく「来店」がついたデータがあれば通知を発動
+                        updated.forEach(item => {
+                            if (item.arrival && item.arrivalTimestamp) {
+                                const wasAlreadyArrived = lastArrivalState[item.id] === true;
+                                const isVeryRecent = (Date.now() - item.arrivalTimestamp) < 3500;
+                                if (!wasAlreadyArrived && isVeryRecent) {
+                                    playSynthSound(); // シンセ音を鳴らす
+                                    firePushNotification(item.company || "新規"); // 🌟スマホ通知を強制発報！
+                                }
+                            }
+                            lastArrivalState[item.id] = item.arrival;
                         });
-                    } else {
-                        setSyncStatus(false, "未認証", true);
-                        showDiagnosticError("auth-lost", "認証セッションが失われました。");
-                    }
-                });
-            } else {
-                loadLocalData();
-            }
-        }
 
-        function detectNewArrivals(newReservations) {
-            newReservations.forEach(item => {
-                if (item.arrival && item.arrivalTimestamp) {
-                    const wasAlreadyArrived = lastArrivalState[item.id] === true;
-                    const isVeryRecent = (Date.now() - item.arrivalTimestamp) < 3000;
-                    if (!wasAlreadyArrived && isVeryRecent) {
-                        playSynthSound();
-                    }
+                        reservations = updated;
+                        renderTable();
+                        document.getElementById('sync-indicator').textContent = "クラウド同期中";
+                    });
                 }
-                lastArrivalState[item.id] = item.arrival;
             });
         }
 
-        function setSyncStatus(isSynced, message, isError = false) {
-            const el = document.getElementById('sync-indicator');
-            if (!el) return;
-            if (isSynced) {
-                el.className = "text-[10px] text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-bold";
-                el.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${message}`;
-            } else {
-                el.className = `text-[10px] ${isError ? 'text-rose-600 bg-rose-50 border-rose-100' : 'text-amber-600 bg-amber-50 border-amber-100'} px-2.5 py-1 rounded-lg flex items-center gap-1.5 font-bold`;
-                el.innerHTML = `<i class="fa-solid ${isError ? 'fa-triangle-exclamation' : 'fa-spinner animate-spin'}"></i> ${message}`;
-            }
-        }
-
-        // --- クラウド/ローカル ハイブリッドデータ操作ロジック ---
-        async function toggleArrival(id, checked) {
-            const updateData = { arrival: checked };
-            if (checked) {
-                updateData.arrivalTimestamp = Date.now();
-                playSynthSound(); 
-            } else {
-                updateData.arrivalTimestamp = null;
-            }
-
-            if (isCloudMode) {
-                if (currentUser) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id);
-                    try {
-                        await updateDoc(docRef, updateData);
-                    } catch (err) {
-                        console.error("Update error: ", err);
-                    }
-                }
-            } else {
-                const idx = reservations.findIndex(r => r.id === id);
-                if (idx !== -1) {
-                    reservations[idx].arrival = checked;
-                    reservations[idx].arrivalTimestamp = updateData.arrivalTimestamp;
-                    saveLocalData();
-                    renderTable();
-                    updateStats();
-                }
-            }
-        }
-
-        async function toggleDeparture(id, checked) {
-            if (isCloudMode) {
-                if (currentUser) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id);
-                    try {
-                        await updateDoc(docRef, { departure: checked });
-                    } catch (err) {
-                        console.error("Update error: ", err);
-                    }
-                }
-            } else {
-                const idx = reservations.findIndex(r => r.id === id);
-                if (idx !== -1) {
-                    reservations[idx].departure = checked;
-                    saveLocalData();
-                    renderTable();
-                    updateStats();
-                }
-            }
-        }
-
-        async function updateField(id, field, value) {
-            let trimmedValue = value.trim();
-            
-            if (field === 'carNum') {
-                trimmedValue = cleanCarNum(trimmedValue); 
-            } else if (field === 'carType') {
-                trimmedValue = cleanCarType(trimmedValue); 
-            }
-
-            const updateData = {};
-            updateData[field] = trimmedValue;
-
-            if (isCloudMode) {
-                if (currentUser) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id);
-                    try {
-                        await updateDoc(docRef, updateData);
-                    } catch (err) {
-                        console.error(`Update ${field} error: `, err);
-                    }
-                }
-            } else {
-                const idx = reservations.findIndex(r => r.id === id);
-                if (idx !== -1) {
-                    reservations[idx][field] = trimmedValue;
-                    saveLocalData();
-                    renderTable();
-                    updateStats();
-                }
-            }
-        }
-
-        async function addEmptyReservation() {
-            const now = new Date();
-            const defaultTime = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-
-            const newItem = {
-                id: 'res_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                arrival: false,
-                departure: false,
-                arrivalTimestamp: null,
-                time: defaultTime,          
-                company: "新規お客様",      
-                name: "ー",            
-                carType: "ー", 
-                carNum: "ー",        
-                stock: "", 
-                memo: "ー",            
-                returnStore: "ー", 
-                isHandwritten: true,  
-                createdAt: Date.now() 
-            };
-
-            for (let i = 1; i <= 3; i++) {
-                newItem['attach' + i] = 'ー';
-            }
-
-            if (isCloudMode) {
-                if (currentUser) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reservations', newItem.id);
-                    try {
-                        await setDoc(docRef, newItem);
-                        showToast("新しい予約枠を追加しました。自由に編集してください。");
-                    } catch (err) {
-                        console.error("Add empty reservation error: ", err);
-                    }
-                }
-            } else {
-                reservations.push(newItem);
-                saveLocalData();
-                renderTable();
-                updateStats();
-                showToast("新しい予約枠を追加しました。自由に編集してください。");
-            }
-        }
-
-        async function deleteRow(id) {
-            if (isCloudMode) {
-                if (currentUser) {
-                    const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id);
-                    try {
-                        await deleteDoc(docRef);
-                        showToast("行を削除しました。");
-                    } catch (err) {
-                        console.error("Delete error: ", err);
-                    }
-                }
-            } else {
-                reservations = reservations.filter(r => r.id !== id);
-                saveLocalData();
-                renderTable();
-                updateStats();
-                showToast("行を削除しました。");
-            }
-        }
-
-        async function clearAllData() {
-            if (isCloudMode) {
-                setSyncStatus(false, "データ一括クラウド削除中...");
-                if (currentUser) {
-                    try {
-                        const batch = writeBatch(db);
-                        reservations.forEach(r => {
-                            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reservations', r.id);
-                            batch.delete(docRef);
-                        });
-                        await batch.commit();
-                        closeClearModal();
-                        showToast("すべての共有データを消去しました。");
-                    } catch (err) {
-                        console.error("Clear error: ", err);
-                        setSyncStatus(false, "削除失敗", true);
-                    }
-                }
-            } else {
-                reservations = [];
-                saveLocalData();
-                renderTable();
-                updateStats();
-                closeClearModal();
-                showToast("すべてのデータを消去しました。");
-            }
-        }
-
-        // --- 📥 エクセルのパース・クリーンアップ ---
-        function cleanTime(timeRaw) {
-            if (!timeRaw) return "";
-            const text = String(timeRaw).trim();
-            const timeMatch = text.match(/(?:^|\s|T)(\d{1,2}):(\d{2})(?::\d{2})?/);
-            if (timeMatch) {
-                return timeMatch[1].padStart(2, '0') + ':' + timeMatch[2];
-            }
-            return text;
-        }
-
-        function cleanCarType(carRaw) {
-            if (!carRaw) return "";
-            const text = String(carRaw).trim();
-            return text.split(/[(（]/)[0].trim();
-        }
-
-        function cleanCarNum(carNumRaw) {
-            if (!carNumRaw) return "";
-            return String(carNumRaw).replace(/[\s ]+/g, "");
-        }
-
-        // 西口広場前店を広場に変換する独自ロジック
-        function cleanStock(stockRaw) {
-            if (!stockRaw) return "";
-            const text = String(stockRaw).trim();
-            if (text === "西口広場前店" || text === "広場") {
-                return "広場";
-            }
-            return ""; 
-        }
-
-        async function processExcelImport() {
-            const rawText = document.getElementById('import-area').value.trim();
-            if (!rawText) {
-                alert("エクセルからコピーしたデータを貼り付けてください。");
-                return;
-            }
-
-            const lines = rawText.split('\n');
-            if (lines.length < 2) {
-                alert("項目名（1行目）とデータ（2行目以降）を一緒にコピーして貼り付けてください。");
-                return;
-            }
-
-            const firstLine = lines[0];
-            let sep = '\t';
-            let headers = firstLine.split('\t');
-            if (headers.length < 2 && firstLine.includes(',')) {
-                headers = firstLine.split(',');
-                sep = ',';
-            }
-
-            const map = mapHeaders(headers);
-            const newReservations = [];
-
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                
-                let cells = [];
-                if (sep === ',') {
-                    cells = parseCSVLine(lines[i]);
-                } else {
-                    cells = lines[i].split('\t');
-                }
-
-                const getVal = (colIndex) => {
-                    if (colIndex === -1 || colIndex >= cells.length) return "";
-                    return cells[colIndex].trim().replace(/^["']|["']$/g, "");
-                };
-
-                const rawTime = getVal(map.time);
-                const rawCompany = getVal(map.company);
-                const rawName = getVal(map.name);
-                const rawCarType = getVal(map.carType);
-                const rawCarNum = getVal(map.carNum);
-                const rawStock = getVal(map.stock); 
-                const rawMemo = getVal(map.memo);
-                const rawReturn = getVal(map.returnStore);
-
-                const a1Name = getVal(map.attach1);
-                const a1Num = getVal(map.attach1Num);
-                const attach1Combined = a1Name && a1Num ? `${a1Name}×${a1Num}` : (a1Name || a1Num || "ー");
-
-                const a2Name = getVal(map.attach2);
-                const a2Num = getVal(map.attach2Num);
-                const attach2Combined = a2Name && a2Num ? `${a2Name}×${a2Num}` : (a2Name || a2Num || "ー");
-
-                const a3Name = getVal(map.attach3);
-                const a3Num = getVal(map.attach3Num);
-                const attach3Combined = a3Name && a3Num ? `${a3Name}×${a3Num}` : (a3Name || a3Num || "ー");
-
-                const item = {
-                    id: 'res_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5),
-                    arrival: false,
-                    departure: false,
-                    arrivalTimestamp: null,
-                    time: cleanTime(rawTime) || "ー",          
-                    company: rawCompany || "ー",      
-                    name: rawName || "ー",            
-                    carType: cleanCarType(rawCarType) || "ー", 
-                    carNum: cleanCarNum(rawCarNum) || "ー",        
-                    stock: cleanStock(rawStock), 
-                    memo: rawMemo || "ー",            
-                    returnStore: rawReturn || "ー", 
-                    attach1: attach1Combined,      
-                    attach2: attach2Combined,      
-                    attach3: attach3Combined       
-                };
-
-                if (item.time !== "ー" || item.company !== "ー" || item.carType !== "ー") {
-                    newReservations.push(item);
-                }
-            }
-
-            if (newReservations.length === 0) {
-                alert("有効なデータ行が読み取れませんでした。エクセルの1行目の項目名を確認してください。");
-                return;
-            }
-
-            if (isCloudMode) {
-                setSyncStatus(false, "クラウド展開中...");
-
-                if (currentUser) {
-                    try {
-                        const batch = writeBatch(db);
-                        
-                        reservations.forEach(r => {
-                            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reservations', r.id);
-                            batch.delete(docRef);
-                        });
-
-                        newReservations.forEach(item => {
-                            const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'reservations', item.id);
-                            batch.set(docRef, item);
-                        });
-
-                        await batch.commit();
-                        closeImportModal();
-                        showToast(`${newReservations.length}件の最新予約データをクラウド全端末に一斉反映しました！`);
-                    } catch (err) {
-                        console.error("Cloud Import Error: ", err);
-                        setSyncStatus(false, "アップロード失敗", true);
-                    }
-                }
-            } else {
-                reservations = newReservations;
-                saveLocalData();
-                renderTable();
-                updateStats();
-                closeImportModal();
-                showToast(`${newReservations.length}件の最新データを登録しました！`);
-            }
-        }
-
-        // --- 3. テーブル描画 & UI描画・ソート制御 ---
+        // --- テーブル描画 & ソート（ボタンを押した順） ---
         function sortData(list) {
             return [...list].sort((a, b) => {
-                const aDep = a.departure ? 1 : 0;
-                const bDep = b.departure ? 1 : 0;
+                const aDep = a.departure ? 1 : 0; const bDep = b.departure ? 1 : 0;
                 if (aDep !== bDep) return aDep - bDep;
-
-                const aArr = a.arrivalTimestamp ? 1 : 0;
-                const bArr = b.arrivalTimestamp ? 1 : 0;
+                const aArr = a.arrival ? 1 : 0; const bArr = b.arrival ? 1 : 0;
                 if (aArr !== bArr) return bArr - aArr;
-
-                if (a.arrivalTimestamp && b.arrivalTimestamp) {
-                    return a.arrivalTimestamp - b.primaryTimestamp;
+                if (a.arrival && b.arrival) {
+                    return (a.arrivalTimestamp || 0) - (b.arrivalTimestamp || 0);
                 }
-
-                const aHand = a.isHandwritten ? 1 : 0;
-                const bHand = b.isHandwritten ? 1 : 0;
-                if (aHand !== bHand) return bHand - aHand; 
-
-                if (a.isHandwritten && b.isHandwritten) {
-                    const aTime = a.createdAt || 0;
-                    const bTime = b.createdAt || 0;
-                    return bTime - aTime;
-                }
-
                 return (a.time || '').localeCompare(b.time || '');
             });
         }
 
         function renderTable() {
             const tbody = document.getElementById('table-body');
-            const noDataView = document.getElementById('no-data-view');
-            const rowCount = document.getElementById('row-count');
-            
-            if (!tbody) return;
-            tbody.innerHTML = '';
-            
-            if (!reservations || reservations.length === 0) {
-                if (noDataView) noDataView.classList.remove('hidden');
-                if (rowCount) rowCount.textContent = "0";
-                return;
-            }
-            if (noDataView) noDataView.classList.add('hidden');
-            if (rowCount) rowCount.textContent = reservations.length;
-
-            const sortedData = sortData(reservations);
-
-            sortedData.forEach(item => {
+            if (!tbody) return; tbody.innerHTML = '';
+            const sorted = sortData(reservations);
+            sorted.forEach(item => {
                 const tr = document.createElement('tr');
+                tr.className = `border-b ${item.departure ? 'bg-slate-100 text-slate-400' : item.arrival ? 'bg-emerald-50 text-slate-800 border-l-4 border-emerald-500' : 'bg-white'}`;
                 
-                let rowBgClass = 'bg-white';
-                if (item.departure) {
-                    rowBgClass = 'bg-slate-100/70 text-slate-400';
-                } else if (item.arrival) {
-                    rowBgClass = 'bg-emerald-50/90 border-l-[5px] border-emerald-500 text-slate-800';
-                }
-                
-                tr.className = `row-hover transition-all duration-150 border-b border-slate-100 ${rowBgClass}`;
-                
-                const depClass = item.departure ? " line-through text-slate-400/75" : " text-slate-700";
-                
-                const baseInputClass = `w-full h-8 px-2 border border-transparent bg-transparent rounded hover:border-slate-300 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150 outline-none text-xs font-medium text-center${depClass}`;
-                const monoInputClass = `w-full h-8 px-2 border border-transparent bg-transparent rounded hover:border-slate-300 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150 outline-none text-xs font-medium font-mono text-center${depClass}`;
-
-                // 🌟 【修正】文字色の切り替え処理（「広場」なら赤文字 text-rose-600、それ以外は黒文字 text-slate-800 / departure時は薄く）
-                let stockTextColorClass = 'text-slate-800'; 
-                if (item.stock === '広場') {
-                    stockTextColorClass = 'text-rose-600 font-bold'; 
-                }
-                if (item.departure) {
-                    stockTextColorClass = 'text-slate-400/75';
-                }
-
-                // 🌟 【修正】紫の背景（bg-indigo-50/30）を削除し、他の列と完全に同じ背景になるよう調整
+                let stockColor = item.stock === '広場' ? 'text-rose-600 font-bold' : 'text-slate-800';
                 const selectStockHTML = `
-                    <select onchange="updateField('${item.id}', 'stock', this.value)" class="w-full h-8 px-1.5 border border-transparent bg-transparent rounded hover:border-slate-300 focus:bg-white focus:border-indigo-600 focus:ring-4 focus:ring-indigo-500/10 transition-all duration-150 outline-none text-xs text-center cursor-pointer ${stockTextColorClass}">
-                        <option value="" class="text-slate-800" ${item.stock === '' ? 'selected' : ''}>ー</option>
-                        <option value="広場" class="text-rose-600 font-bold" ${item.stock === '広場' ? 'selected' : ''}>広場</option>
+                    <select onchange="updateField('${item.id}', 'stock', this.value)" class="w-full bg-transparent text-center ${stockColor}">
+                        <option value="" ${item.stock === '' ? 'selected' : ''}>ー</option>
+                        <option value="広場" ${item.stock === '広場' ? 'selected' : ''}>広場</option>
                     </select>
                 `;
 
                 tr.innerHTML = `
-                    <td class="p-2 text-center border-r border-slate-100">
-                        <input type="checkbox" ${item.arrival ? 'checked' : ''} onchange="toggleArrival('${item.id}', this.checked)" class="w-4 h-4 text-emerald-600 border-slate-300 rounded focus:ring-emerald-500 cursor-pointer">
-                    </td>
-                    <td class="p-2 text-center border-r border-slate-100">
-                        <input type="checkbox" ${item.departure ? 'checked' : ''} onchange="toggleDeparture('${item.id}', this.checked)" class="w-4 h-4 text-slate-600 border-slate-300 rounded focus:ring-slate-500 cursor-pointer">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.time || ''}" onchange="updateField('${item.id}', 'time', this.value)" placeholder="12:00" class="${monoInputClass}">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.company || ''}" onchange="updateField('${item.id}', 'company', this.value)" placeholder="お客様名..." class="${baseInputClass}">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.name || ''}" onchange="updateField('${item.id}', 'name', this.value)" placeholder="配車住所..." class="${baseInputClass}" title="${item.name || ''}">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.carType || ''}" onchange="updateField('${item.id}', 'carType', this.value)" placeholder="車種..." class="${baseInputClass}">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.carNum || ''}" onchange="updateField('${item.id}', 'carNum', this.value)" placeholder="車番..." class="${monoInputClass}">
-                    </td>
-                    <td class="p-0.5 border-r border-slate-100"> ${selectStockHTML}
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.memo || ''}" onchange="updateField('${item.id}', 'memo', this.value)" placeholder="備考を入力..." class="${baseInputClass}">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.returnStore || ''}" onchange="updateField('${item.id}', 'returnStore', this.value)" placeholder="返却店舗..." class="${baseInputClass}">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.attach1 || ''}" onchange="updateField('${item.id}', 'attach1', this.value)" placeholder="添付品1" class="${baseInputClass}">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.attach2 || ''}" onchange="updateField('${item.id}', 'attach2', this.value)" placeholder="添付品2" class="${baseInputClass}">
-                    </td>
-                    <td class="p-1 border-r border-slate-100">
-                        <input type="text" value="${item.attach3 || ''}" onchange="updateField('${item.id}', 'attach3', this.value)" placeholder="添付品3" class="${baseInputClass}">
-                    </td>
-                    <td class="p-2 text-center">
-                        <button onclick="deleteRow('${item.id}')" class="text-slate-400 hover:text-rose-600 p-1.5 rounded-lg hover:bg-rose-50 transition cursor-pointer">
-                            <i class="fa-solid fa-trash-can"></i>
-                        </button>
-                    </td>
+                    <td class="p-2 text-center"><input type="checkbox" ${item.arrival ? 'checked' : ''} onchange="toggleArrival('${item.id}', this.checked)"></td>
+                    <td class="p-2 text-center"><input type="checkbox" ${item.departure ? 'checked' : ''} onchange="toggleDeparture('${item.id}', this.checked)"></td>
+                    <td class="p-1"><input type="text" value="${item.time || ''}" onchange="updateField('${item.id}', 'time', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1"><input type="text" value="${item.company || ''}" onchange="updateField('${item.id}', 'company', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1"><input type="text" value="${item.name || ''}" onchange="updateField('${item.id}', 'name', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1"><input type="text" value="${item.carType || ''}" onchange="updateField('${item.id}', 'carType', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1"><input type="text" value="${item.carNum || ''}" onchange="updateField('${item.id}', 'carNum', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1">${selectStockHTML}</td>
+                    <td class="p-1"><input type="text" value="${item.memo || ''}" onchange="updateField('${item.id}', 'memo', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1"><input type="text" value="${item.returnStore || ''}" onchange="updateField('${item.id}', 'returnStore', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1"><input type="text" value="${item.attach1 || ''}" onchange="updateField('${item.id}', 'attach1', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1"><input type="text" value="${item.attach2 || ''}" onchange="updateField('${item.id}', 'attach2', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1"><input type="text" value="${item.attach3 || ''}" onchange="updateField('${item.id}', 'attach3', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-2 text-center"><button onclick="deleteRow('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        function renderMonitorTable(dataList) {
-            const tbody = document.getElementById('monitor-table-body');
-            if (!tbody) return;
-            tbody.innerHTML = '';
+        // --- データ更新処理 ---
+        window.toggleArrival = async function(id, checked) {
+            const val = { arrival: checked, arrivalTimestamp: checked ? Date.now() : null };
+            if (isCloudMode) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), val); }
+        };
+        window.toggleDeparture = async function(id, checked) {
+            if (isCloudMode) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { departure: checked }); }
+        };
+        window.updateField = async function(id, field, value) {
+            const d = {}; d[field] = value.trim();
+            if (isCloudMode) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), d); }
+        };
+        window.deleteRow = async function(id) {
+            if (isCloudMode) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id)); }
+        };
+        window.addEmptyReservation = async function() {
+            const nid = 'res_' + Date.now();
+            const newItem = { id: nid, arrival: false, departure: false, time: "12:00", company: "新規顧客", name: "ー", carType: "ー", carNum: "ー", stock: "", memo: "ー", returnStore: "ー", attach1: "ー", attach2: "ー", attach3: "ー" };
+            if (isCloudMode) { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), newItem); }
+        };
 
-            if (!dataList || dataList.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-10 text-center text-zinc-500 text-sm">本日の作業予約はございません</td></tr>`;
-                return;
-            }
+        window.bypassLockToLocalMode = function() {
+            isCloudMode = false;
+            document.getElementById('cloud-lock-screen').classList.add('hidden');
+            document.getElementById('admin-view').classList.remove('pointer-events-none');
+            document.getElementById('admin-view').style.opacity = "1";
+            document.getElementById('sync-indicator').textContent = "ローカル保存モード";
+        };
 
-            const sorted = sortData(dataList);
-
-            sorted.forEach(item => {
-                let statusBadge = '';
-                if (item.departure) {
-                    statusBadge = `<span class="bg-zinc-800 text-zinc-500 border border-zinc-700 px-3 py-1 rounded-full text-[11px] font-bold">対応終了</span>`;
-                } else if (item.arrival) {
-                    statusBadge = `<span class="bg-emerald-950 text-emerald-400 border border-emerald-800 px-3 py-1 rounded-full text-[11px] font-bold animate-pulse">ご案内中</span>`;
-                } else {
-                    statusBadge = `<span class="bg-zinc-900 text-zinc-400 border border-zinc-800 px-3 py-1 rounded-full text-[11px]">準備中</span>`;
-                }
-
-                const maskedName = maskName(item.company);
-                const maskedCarNum = maskCarNumber(item.carNum);
-
-                const tr = document.createElement('tr');
-                tr.className = `border-b border-zinc-800 ${item.departure ? 'opacity-40' : ''}`;
-                tr.innerHTML = `
-                    <td class="p-5 text-center">${statusBadge}</td>
-                    <td class="p-5 text-zinc-400 font-mono text-sm">${item.time || '未指定'}</td>
-                    <td class="p-5 text-zinc-200 text-base font-bold">${maskedName}</td>
-                    <td class="p-5 text-zinc-300">${item.carType || '-'}</td>
-                    <td class="p-5 text-zinc-400 font-mono text-base">${maskedCarNum}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function updateStats() {
-            if (!reservations) return;
-            const totalReservations = reservations.length;
-            const totalArrived = reservations.filter(item => item.arrival).length;
-            const totalCompleted = reservations.filter(item => item.departure).length;
-
-            const remainingReservations = Math.max(0, totalReservations - totalArrived);
-            const activeInside = Math.max(0, totalArrived - totalCompleted);
-            
-            const progressPercent = totalReservations > 0 
-                ? Math.round((totalCompleted / totalReservations) * 100) 
-                : 0;
-
-            const statTotal = document.getElementById('stat-total');
-            const statAct = document.getElementById('stat-active');
-            const statCompleted = document.getElementById('stat-completed');
-            const statProgress = document.getElementById('stat-progress');
-            const statProgressCount = document.getElementById('stat-progress-count');
-            const statProgressBar = document.getElementById('stat-progress-bar');
-
-            if (statTotal) statTotal.textContent = totalReservations;
-            if (statAct) statAct.textContent = activeInside;
-            if (statCompleted) statCompleted.textContent = totalCompleted;
-            if (statProgress) statProgress.textContent = progressPercent;
-            
-            if (statProgressCount) {
-                statProgressCount.textContent = `( ${totalCompleted} / ${totalReservations} 件 )`;
-            }
-            
-            if (statProgressBar) {
-                statProgressBar.style.width = `${progressPercent}%`;
-            }
-        }
-
-        // --- 4. BroadcastChannel 同期 ---
-        function initBroadcastChannel() {
-            if (window.BroadcastChannel) {
-                broadcastChannel = new BroadcastChannel(CHANNEL_NAME);
-                broadcastChannel.onmessage = function(e) {
-                    if (e.data && e.data.type === 'REQUEST_DATA') {
-                        sendDataToMonitor();
-                    }
-                };
-            }
-        }
-
-        function sendDataToMonitor() {
-            if (broadcastChannel) {
-                broadcastChannel.postMessage({
-                    type: 'UPDATE_DATA',
-                    data: reservations
-                });
-            }
-        }
-
-        function launchMonitorWindow() {
-            const myUrl = window.location.pathname + '?mode=monitor';
-            const monitorWin = window.open(myUrl, 'ReservationMonitor', 'width=1100,height=750,menubar=no,toolbar=no,location=no,status=no');
-            if (monitorWin) {
-                showToast("待合室モニター画面を起動しました！");
-                setTimeout(sendDataToMonitor, 1000);
-            } else {
-                document.getElementById('admin-view').style.display = 'none';
-                document.getElementById('monitor-view').classList.remove('hidden');
-                renderMonitorTable(reservations);
-            }
-        }
-
-        function closeMonitorMode() {
-            document.getElementById('monitor-view').classList.add('hidden');
-            document.getElementById('admin-view').style.display = 'flex';
-        }
-
-        // --- 5. 各種ダイアログ表示とヘルパー ---
-        function openImportModal() {
-            const modal = document.getElementById('import-modal');
-            if (modal) {
-                modal.classList.remove('hidden');
-                const area = document.getElementById('import-area');
-                if (area) {
-                    area.value = '';
-                    area.focus();
-                }
-                previewImport();
-            }
-        }
-
-        function closeImportModal() {
-            const modal = document.getElementById('import-modal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        function previewImport() {
-            const rawText = document.getElementById('import-area').value;
-            const container = document.getElementById('mapping-preview');
-            if (!container) return;
-            container.innerHTML = '';
-
-            if (!rawText.trim()) {
-                container.innerHTML = `<div class="col-span-full text-slate-400 text-center py-2">データを貼り付けするとマッピング結果が表示されます</div>`;
-                return;
-            }
-
-            const lines = rawText.split('\n');
-            const firstLine = lines[0];
-            let headers = firstLine.split('\t');
-
-            let sep = '\t';
-            if (headers.length < 2 && firstLine.includes(',')) {
-                headers = firstLine.split(',');
-                sep = ',';
-            }
-
-            const detected = mapHeaders(headers);
-
-            const labels = {
-                time: "予約時間",
-                company: "お客様名",
-                name: "配車住所",
-                carType: "車種名",
-                carNum: "車両ナンバー",
-                stock: "在庫", 
-                memo: "備考",
-                returnStore: "返却店舗",
-                attach1: "添付品1",
-                attach1Num: "添付品1個数",
-                attach2: "添付品2",
-                attach2Num: "添付品2個数",
-                attach3: "添付品3",
-                attach3Num: "添付品3個数"
-            };
-
-            Object.keys(labels).forEach(key => {
-                const detectedCol = detected[key];
-                const isFound = detectedCol !== -1;
-                const div = document.createElement('div');
-                div.className = `p-2 rounded border flex flex-col gap-1 ${isFound ? 'bg-emerald-50 border-emerald-200 text-emerald-800 font-bold' : 'bg-slate-50 border-slate-200 text-slate-400'}`;
-                div.innerHTML = `
-                    <span class="text-[9px] text-slate-400 uppercase">${labels[key]}</span>
-                    <span class="truncate">${isFound ? headers[detectedCol] : '✕ 未検知'}</span>
-                `;
-                container.appendChild(div);
-            });
-        }
-
-        function mapHeaders(headers) {
-            const map = {};
-            Object.keys(headerKeywords).forEach(key => {
-                map[key] = -1;
-                const keywords = headerKeywords[key];
-                
-                for (let i = 0; i < headers.length; i++) {
-                    const h = headers[i].trim();
-                    if (keywords.includes(h)) {
-                        map[key] = i;
-                        break;
-                    }
-                }
-
-                if (map[key] === -1) {
-                    for (let i = 0; i < headers.length; i++) {
-                        const h = headers[i].trim();
-                        for (let k = 0; k < keywords.length; k++) {
-                            if (h.includes(keywords[k])) {
-                                map[key] = i;
-                                break;
-                            }
-                        }
-                        if (map[key] !== -1) break;
-                    }
-                }
-            });
-            return map;
-        }
-
-        function parseCSVLine(line) {
-            const result = [];
-            let currentCell = '';
-            let insideQuotes = false;
-            for (let i = 0; i < line.length; i++) {
-                const char = line[i];
-                if (char === '"') {
-                    insideQuotes = !insideQuotes;
-                } else if (char === ',' && !insideQuotes) {
-                    result.push(currentCell);
-                    currentCell = '';
-                } else {
-                    currentCell += char;
-                }
-            }
-            result.push(currentCell);
-            return result;
-        }
-
-        // サイネージ用のお客様名マスク
-        function maskName(fullName) {
-            if (!fullName || fullName === "ー") return "-";
-            const trimmed = fullName.trim();
-            const parts = trimmed.split(/[\s ]+/);
-            if (parts.length > 1) return parts[0] + " 様";
-            if (trimmed.length >= 4) return trimmed.substr(0, 3) + "*** 様";
-            return trimmed + " 様";
-        }
-
-        // サイネージ用のナンバーマスク
-        function maskCarNumber(carNum) {
-            if (!carNum || carNum === "ー") return "-";
-            const cleaned = carNum.trim();
-            const matches = cleaned.match(/\d{1,4}[-ー]?\d{1,4}$|[\d]{1,4}$/);
-            if (matches) return "*** " + matches[0];
-            if (cleaned.length > 4) return "*** " + cleaned.substr(cleaned.length - 4);
-            return cleaned;
-        }
-
-        function confirmClearData() {
-            const modal = document.getElementById('clear-modal');
-            if (modal) modal.classList.remove('hidden');
-        }
-
-        function closeClearModal() {
-            const modal = document.getElementById('clear-modal');
-            if (modal) modal.classList.add('hidden');
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            const toastMsg = document.getElementById('toast-msg');
-            if (!toast || !toastMsg) return;
-            toastMsg.textContent = message;
-            
-            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
-            toast.classList.add('translate-y-0', 'opacity-100');
-            
-            setTimeout(() => {
-                toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-                toast.classList.remove('translate-y-0', 'opacity-100');
-            }, 3000);
-        }
-
-        // 🔔 ピンポーン♪ チャイム（Web Audio API波形合成）
+        // シンセサイザー音源再生
         function playSynthSound() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                
-                // 1音目：高い「ピン（ミ：E6）」
-                const osc1 = ctx.createOscillator();
-                const gain1 = ctx.createGain();
-                osc1.type = 'sine';
-                osc1.frequency.setValueAtTime(1318.51, ctx.currentTime); 
-                
-                gain1.gain.setValueAtTime(0, ctx.currentTime);
-                gain1.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
-                gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-                
-                osc1.connect(gain1);
-                gain1.connect(ctx.destination);
-                osc1.start(ctx.currentTime);
-                osc1.stop(ctx.currentTime + 0.8);
-
-                // 2音目：低い「ポーン（ド：C6）」
-                const osc2 = ctx.createOscillator();
-                const gain2 = ctx.createGain();
-                osc2.type = 'sine';
-                osc2.frequency.setValueAtTime(1046.50, ctx.currentTime + 0.35); 
-                
-                gain2.gain.setValueAtTime(0, ctx.currentTime + 0.35);
-                gain2.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.37);
-                gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
-                
-                osc2.connect(gain2);
-                gain2.connect(ctx.destination);
-                osc2.start(ctx.currentTime + 0.35);
-                osc2.stop(ctx.currentTime + 1.5);
-                
-                // 倍音1
-                const osc3 = ctx.createOscillator();
-                const gain3 = ctx.createGain();
-                osc3.type = 'triangle';
-                osc3.frequency.setValueAtTime(659.25, ctx.currentTime); 
-                gain3.gain.setValueAtTime(0, ctx.currentTime);
-                gain3.gain.linearRampToValueAtTime(0.03, ctx.currentTime + 0.05);
-                gain3.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-                osc3.connect(gain3);
-                gain3.connect(ctx.destination);
-                osc3.start(ctx.currentTime);
-                osc3.stop(ctx.currentTime + 0.8);
-
-                // 倍音2
-                const osc4 = ctx.createOscillator();
-                const gain4 = ctx.createGain();
-                osc4.type = 'triangle';
-                osc4.frequency.setValueAtTime(523.25, ctx.currentTime + 0.35); 
-                gain4.gain.setValueAtTime(0, ctx.currentTime + 0.35);
-                gain4.gain.linearRampToValueAtTime(0.03, ctx.currentTime + 0.38);
-                gain4.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
-                osc4.connect(gain4);
-                gain4.connect(ctx.destination);
-                osc4.start(ctx.currentTime + 0.35);
-                osc4.stop(ctx.currentTime + 1.5);
-
-            } catch (e) {
-                console.error("Audio Error: ", e);
-            }
+                const osc = ctx.createOscillator(); const gain = ctx.createGain();
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1318.51, ctx.currentTime);
+                gain.gain.setValueAtTime(0, ctx.currentTime); gain.gain.linearRampToValueAtTime(0.15, ctx.currentTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
+                osc.connect(gain); gain.connect(ctx.destination); osc.start(); osc.stop(ctx.currentTime + 0.8);
+            } catch (e) {}
         }
 
-        // --- 6. ライフサイクル初期化処理 ---
-        window.openImportModal = openImportModal;
-        window.closeImportModal = closeImportModal;
-        window.launchMonitorWindow = launchMonitorWindow;
-        window.confirmClearData = confirmClearData;
-        window.closeClearModal = closeClearModal;
-        window.clearAllData = clearAllData;
-        window.processExcelImport = processExcelImport;
-        window.previewImport = previewImport;
-        window.toggleArrival = toggleArrival;
-        window.toggleDeparture = toggleDeparture;
-        window.updateField = updateField; 
-        window.addEmptyReservation = addEmptyReservation; 
-        window.deleteRow = deleteRow;
-        window.closeMonitorMode = closeMonitorMode;
-        window.bypassLockToLocalMode = bypassLockToLocalMode;
-
-        window.addEventListener('offline', () => {
-            if (isCloudMode) {
-                showDiagnosticError("offline", "通信接続が失われました。インターネット接続を確認してください。");
-                showToast("ネットワーク接続がオフラインになりました。");
-            }
-        });
-
-        window.addEventListener('online', async () => {
-            setupEnvironment();
-            if (isCloudMode) {
-                await initAuth();
-                initRealtimeSync();
-                showToast("クラウドとの接続が自動復旧しました！");
-            }
-        });
-
         window.onload = async function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            
-            if (urlParams.get('mode') === 'monitor') {
-                document.getElementById('admin-view').style.display = 'none';
-                document.getElementById('monitor-view').classList.remove('hidden');
-                document.querySelector('header button').style.display = 'none'; 
-                
-                setupEnvironment();
-                if (!isCloudMode) {
-                    loadLocalData();
-                    if (window.BroadcastChannel) {
-                        const channel = new BroadcastChannel(CHANNEL_NAME);
-                        channel.onmessage = function(e) {
-                            if (e.data && e.data.type === 'UPDATE_DATA') {
-                                renderMonitorTable(e.data.data);
-                            }
-                        };
-                        channel.postMessage({ type: 'REQUEST_DATA' });
-                    }
-                    return;
-                }
-                await initAuth();
-                
-                const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
-                onSnapshot(collectionRef, (snapshot) => {
-                    const monitorData = [];
-                    snapshot.forEach((doc) => {
-                        monitorData.push({ id: doc.id, ...doc.data() });
-                    });
-                    renderMonitorTable(monitorData);
-                }, () => {
-                    showDiagnosticError("permission-denied", "サイネージ画面がデータベースと同期できません。");
-                });
-                return;
-            }
-
             setupEnvironment();
-            initBroadcastChannel();
             if (isCloudMode) {
-                await initAuth();
+                await signInAnonymously(auth);
                 initRealtimeSync();
             }
         };
-
     </script>
 </body>
 </html>

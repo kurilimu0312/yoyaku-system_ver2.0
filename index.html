@@ -53,7 +53,7 @@
                     現在、複数端末の同期用クラウドに接続されていません。
                 </div>
             </div>
-            <button onclick="bypassLockToLocalMode()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-2 cursor-pointer">
+            <button onclick="bypassLockToLocalMode()" class="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold rounded-xl shadow transition flex items-center justify-center gap-2 border border-slate-700 cursor-pointer">
                 <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i> Firebaseなしで試す（ローカル体験モード）
             </button>
         </div>
@@ -69,33 +69,63 @@
                     <div>
                         <div class="flex items-center gap-1.5">
                             <h1 class="text-lg font-black tracking-tight">予約状況 自動管理 system</h1>
-                            <span id="live-badge" class="text-[9px] text-amber-500 font-bold bg-amber-950/80 px-2.5 py-0.5 rounded border border-amber-900">SINGLE RUN</span>
+                            <span id="live-badge" class="text-[9px] text-amber-500 font-bold bg-amber-950/80 px-2.5 py-0.5 rounded border border-amber-900 flex items-center gap-1">
+                                <i class="fa-solid fa-circle"></i> SINGLE RUN
+                            </span>
                         </div>
                     </div>
                 </div>
                 
                 <div id="mobile-bell-area" class="hidden md:flex items-center">
-                    <button onclick="requestMobileNotification()" class="bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-900 text-xs font-black px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-amber-400">
+                    <button onclick="requestMobileNotification()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-black px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-amber-400">
                         <i class="fa-solid fa-bell animate-bounce"></i> 📲 このスマホの通知をONにする
                     </button>
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap">
-                    <button onclick="addEmptyReservation()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-plus"></i> 直接追加</button>
-                    <button onclick="openImportModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-file-import"></i> エクセル貼り付け</button>
-                    <button onclick="launchMonitorWindow()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-desktop text-emerald-400"></i> 📺 モニター画面</button>
+                    <button onclick="addEmptyReservation()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-emerald-500">
+                        <i class="fa-solid fa-plus"></i> 予約を直接追加
+                    </button>
+                    <button onclick="openImportModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-blue-500">
+                        <i class="fa-solid fa-file-import"></i> エクセルから貼り付け
+                    </button>
+                    <button onclick="launchMonitorWindow()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer">
+                        <i class="fa-solid fa-desktop text-emerald-400"></i> 📺 モニター画面
+                    </button>
+                    <button onclick="confirmClearData()" class="bg-slate-800 hover:bg-rose-950 hover:text-rose-200 border border-slate-700 text-slate-400 text-xs font-bold px-3 py-2.5 rounded-xl transition flex items-center gap-1.5 ml-auto cursor-pointer">
+                        <i class="fa-solid fa-trash-can text-[11px]"></i> 本日のデータをクリア
+                    </button>
                 </div>
             </div>
         </header>
 
         <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
-            <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
-                <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
-                    <div class="flex items-center gap-2">
-                        <span id="table-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
-                        <h2 id="table-title" class="text-xs font-black text-slate-700 tracking-wider uppercase">データシート</h2>
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-list-check"></i></div>
+                    <div><span class="text-[10px] text-slate-400 font-bold tracking-wider block">本日の総予約数</span><span id="stat-total" class="text-2xl font-black text-slate-800">0</span> <span class="text-xs text-slate-400 font-medium">件</span></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-user-nurse animate-pulse"></i></div>
+                    <div><span class="text-[10px] text-slate-400 font-bold tracking-wider block">ただいま対応中</span><span id="stat-active" class="text-2xl font-black text-amber-600 animate-pulse">0</span> <span class="text-xs text-slate-400 font-medium">件</span></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0 border border-emerald-100"><i class="fa-solid fa-clipboard-check"></i></div>
+                    <div><span class="text-[10px] text-slate-400 font-bold tracking-wider block">出発完了</span><span id="stat-completed" class="text-2xl font-black text-emerald-600">0</span> <span class="text-xs text-slate-400 font-medium">件</span></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex flex-col justify-center gap-2">
+                    <div class="flex items-center gap-4 w-full">
+                        <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0 border border-indigo-100"><i class="fa-solid fa-chart-line"></i></div>
+                        <div class="flex-1"><span class="text-[10px] text-slate-400 font-bold block">進捗率</span><div class="flex items-baseline gap-1"><span id="stat-progress" class="text-2xl font-black text-indigo-600">0</span><span class="text-xs text-slate-400 font-bold">%</span><span id="stat-progress-count" class="text-[11px] text-slate-400 ml-1.5 font-bold">(0/0件)</span></div></div>
                     </div>
-                    <div id="sync-indicator" class="text-[10px] text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg">読み込み中...</div>
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden"><div id="stat-progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-700" style="width: 0%"></div></div>
+                </div>
+            </section>
+
+            <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
+                <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+                    <div class="flex items-center gap-2"><span id="table-indicator" class="w-2.5 h-2.5 rounded-full bg-amber-500"></span><h2 id="table-title" class="text-xs font-black text-slate-700 tracking-wider uppercase">データシート</h2></div>
+                    <div class="flex items-center gap-2"><div id="sync-indicator" class="text-[10px] text-amber-600 bg-amber-50 px-2.5 py-1 rounded-lg">読み込み中...</div><span class="text-[10px] text-slate-400 bg-white border px-2.5 py-1 rounded-lg">行数: <span id="row-count" class="font-bold">0</span>件</span></div>
                 </div>
 
                 <div class="flex-1 overflow-x-auto min-h-[400px]">
@@ -120,20 +150,47 @@
                         </thead>
                         <tbody id="table-body" class="divide-y divide-slate-150 text-xs"></tbody>
                     </table>
+                    <div id="no-data-view" class="hidden flex flex-col items-center justify-center py-24 text-center">
+                        <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 text-xl mb-4"><i class="fa-solid fa-file-excel"></i></div>
+                        <h3 class="text-sm font-bold text-slate-800">予約データがありません</h3>
+                    </div>
                 </div>
             </section>
         </main>
     </div>
 
+    <div id="monitor-view" class="hidden fixed inset-0 bg-zinc-950 text-white flex flex-col z-50">
+        <header class="bg-zinc-900 border-b border-zinc-800 px-8 py-5 flex items-center justify-between shrink-0">
+            <h1 class="text-lg font-black tracking-widest">本日の作業進行状況</h1>
+            <button onclick="closeMonitorMode()" class="bg-zinc-800 text-xs font-bold px-4 py-2 rounded-lg">戻る</button>
+        </header>
+        <main class="flex-1 p-8 overflow-hidden max-w-7xl w-full mx-auto">
+            <table class="w-full text-left border-collapse table-fixed bg-zinc-900 rounded-2xl overflow-hidden">
+                <thead><tr class="bg-zinc-800 text-zinc-400 text-xs font-bold border-b"><th class="p-5 w-[15%] text-center">状況</th><th class="p-5 w-[15%]">予約時間</th><th class="p-5 w-[25%]">お客様名</th><th class="p-5 w-[25%]">車種</th><th class="p-5 w-[20%]">車番</th></tr></thead>
+                <tbody id="monitor-table-body" class="divide-y divide-zinc-800 text-base font-medium"></tbody>
+            </table>
+        </main>
+    </div>
+
     <div id="import-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
-        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl border p-6 flex flex-col gap-4">
-            <textarea id="import-area" oninput="previewImport()" placeholder="ここにエクセルデータを貼り付け..." class="w-full h-40 p-4 border rounded-xl font-mono text-[11px] bg-slate-50 resize-none"></textarea>
+        <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
+            <textarea id="import-area" oninput="previewImport()" placeholder="ここにデータを貼り付け..." class="w-full h-40 p-4 border rounded-xl font-mono text-[11px] bg-slate-50 resize-none"></textarea>
+            <div id="mapping-preview" class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-[10px]"></div>
             <div class="flex justify-end gap-2">
                 <button onclick="closeImportModal()" class="px-4 py-2 bg-white border text-slate-700 text-xs font-bold rounded-lg">キャンセル</button>
-                <button onclick="processExcelImport()" class="px-5 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow">一斉反映</button>
+                <button onclick="processExcelImport()" class="px-5 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg">一斉反映</button>
             </div>
         </div>
     </div>
+
+    <div id="clear-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
+        <div class="bg-white max-w-sm w-full rounded-2xl p-6 text-center flex flex-col gap-4">
+            <h3 class="font-bold text-slate-800 text-sm">共有データをすべて消去しますか？</h3>
+            <div class="flex gap-2"><button onclick="closeClearModal()" class="flex-1 py-2 border rounded-lg text-xs font-bold">やめる</button><button onclick="clearAllData()" class="flex-1 py-2 bg-rose-600 text-white text-xs font-bold rounded-lg">消去する</button></div>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl transition transform translate-y-20 opacity-0 pointer-events-none duration-300 z-50"><span id="toast-msg"></span></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -143,79 +200,64 @@
         let reservations = [];
         let currentUser = null;
         let lastArrivalState = {}; 
-        let db = null;
-        let auth = null;
-        let appId = 'default-app-id';
-        let isCloudMode = false; 
+        let db = null; let auth = null; let appId = 'default-app-id'; let isCloudMode = false;
 
-        // 🌟【1枚完結通知システム】ブラウザが通知を受け取れる状態かチェック
+        const headerKeywords = {
+            time: ["出発予定年月日時分", "予約時間", "時間"], company: ["借受人名", "お客様名", "会社名"], name: ["配車予定住所", "配車住所"],
+            carType: ["車名", "車種"], carNum: ["登録№（表示用）", "車番"], stock: ["在庫営業店舗名", "在庫"], memo: ["連絡事項", "備考"],
+            returnStore: ["帰着予定営業店舗名", "返却店舗"], attach1: ["添付品名１"], attach1Num: ["添付品個数１"],
+            attach2: ["添付品名２"], attach2Num: ["添付品個数２"], attach3: ["添付品名３"], attach3Num: ["添付品個数３"]
+        };
+
+        // 📲 スマホ通知連動のシステムチェック
         function checkNotificationSystem() {
             const bellArea = document.getElementById('mobile-bell-area');
             if ('Notification' in window) {
-                bellArea.classList.remove('hidden'); // ボタンを表示
+                bellArea.classList.remove('hidden');
                 if (Notification.permission === 'granted') {
                     bellArea.innerHTML = `<span class="text-xs font-bold text-emerald-400 bg-emerald-950 px-3 py-1.5 rounded-xl border border-emerald-900"><i class="fa-solid fa-circle-check"></i> スマホ通知連動中</span>`;
                 }
             }
         }
 
-        // 🌟【1枚完結通知システム】ボタンが押されたらスマホに許可を求める
         window.requestMobileNotification = function() {
             Notification.requestPermission().then(permission => {
                 if (permission === 'granted') {
-                    alert('通知の連携に成功しました！スマホがスリープでも振動とポップアップで通知が届きます。');
+                    alert('通知の連携に成功しました！');
                     new Notification("CLOUD PRO", { body: "通知連動テストに成功しました！" });
                     checkNotificationSystem();
-                } else {
-                    alert('通知が拒否されました。スマホの設定からブラウザの通知許可をオンにしてください。');
                 }
             });
         };
 
-        // 🌟【1枚完結通知システム】バックグラウンド・スリープ時でも強制プッシュ通知を出す関数
         function firePushNotification(clientName) {
             if ('Notification' in window && Notification.permission === 'granted') {
-                try {
-                    // バイブレーションと音を伴う公式ポップアップ通知
-                    const notification = new Notification("【CLOUD PRO】来店通知", {
-                        body: `${clientName} 様がご来店されました。確認してください！`,
-                        icon: "https://via.placeholder.com/192/007bff/ffffff?text=CP",
-                        tag: "visit-alert",
-                        renotify: true
-                    });
-                    
-                    // Android等のバイブ強制作動
-                    if ('vibrate' in navigator) {
-                        navigator.vibrate([300, 100, 300, 100, 300]); 
-                    }
-                } catch (e) {
-                    console.log("Notification error caught", e);
-                }
+                new Notification("【CLOUD PRO】来店通知", {
+                    body: `${clientName} 様がご来店されました。確認してください！`,
+                    icon: "https://via.placeholder.com/192/007bff/ffffff?text=CP",
+                    tag: "visit-alert",
+                    renotify: true
+                });
+                if ('vibrate' in navigator) navigator.vibrate([300, 100, 300]);
             }
         }
 
-        // --- Firebase 環境判定 ---
         function setupEnvironment() {
             if (typeof firebaseConfig !== 'undefined' && firebaseConfig && firebaseConfig.apiKey) {
-                try {
-                    appId = firebaseConfig.projectId;
-                    const app = initializeApp(firebaseConfig);
-                    auth = getAuth(app);
-                    db = getFirestore(app);
-                    isCloudMode = true;
-                    document.getElementById('cloud-lock-screen').classList.add('hidden');
-                    document.getElementById('admin-view').classList.remove('pointer-events-none');
-                    document.getElementById('admin-view').style.opacity = "1";
-                    checkNotificationSystem();
-                } catch (e) {
-                    bypassLockToLocalMode();
-                }
-            } else {
-                bypassLockToLocalMode();
+                appId = firebaseConfig.projectId;
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app); db = getFirestore(app); isCloudMode = true;
+                document.getElementById('cloud-lock-screen').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('pointer-events-none');
+                document.getElementById('admin-view').style.opacity = "1";
+                document.getElementById('sync-indicator').className = "text-[10px] text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg font-bold";
+                document.getElementById('sync-indicator').textContent = "クラウド共有LIVE";
+                document.getElementById('live-badge').textContent = "CLOUD LIVE";
+                document.getElementById('live-badge').className = "text-[9px] text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-0.5 rounded border border-emerald-900";
+                checkNotificationSystem();
             }
         }
 
-        // リアルタイムクラウド同期
         function initRealtimeSync() {
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
@@ -224,108 +266,122 @@
                     onSnapshot(collectionRef, (snapshot) => {
                         const updated = [];
                         snapshot.forEach((doc) => { updated.push({ id: doc.id, ...doc.data() }); });
-
-                        // 🌟データが更新された際、新しく「来店」がついたデータがあれば通知を発動
+                        
                         updated.forEach(item => {
                             if (item.arrival && item.arrivalTimestamp) {
-                                const wasAlreadyArrived = lastArrivalState[item.id] === true;
-                                const isVeryRecent = (Date.now() - item.arrivalTimestamp) < 3500;
-                                if (!wasAlreadyArrived && isVeryRecent) {
-                                    playSynthSound(); // シンセ音を鳴らす
-                                    firePushNotification(item.company || "新規"); // 🌟スマホ通知を強制発報！
+                                if (!lastArrivalState[item.id]) {
+                                    playSynthSound();
+                                    firePushNotification(item.company || "新規お客様");
                                 }
                             }
                             lastArrivalState[item.id] = item.arrival;
                         });
 
-                        reservations = updated;
-                        renderTable();
-                        document.getElementById('sync-indicator').textContent = "クラウド同期中";
+                        reservations = updated; renderTable(); updateStats();
                     });
                 }
             });
         }
 
-        // --- テーブル描画 & ソート（ボタンを押した順） ---
         function sortData(list) {
             return [...list].sort((a, b) => {
                 const aDep = a.departure ? 1 : 0; const bDep = b.departure ? 1 : 0;
                 if (aDep !== bDep) return aDep - bDep;
                 const aArr = a.arrival ? 1 : 0; const bArr = b.arrival ? 1 : 0;
                 if (aArr !== bArr) return bArr - aArr;
-                if (a.arrival && b.arrival) {
-                    return (a.arrivalTimestamp || 0) - (b.arrivalTimestamp || 0);
-                }
+                if (a.arrival && b.arrival) return (a.arrivalTimestamp || 0) - (b.arrivalTimestamp || 0);
                 return (a.time || '').localeCompare(b.time || '');
             });
         }
 
         function renderTable() {
             const tbody = document.getElementById('table-body');
+            const rowCount = document.getElementById('row-count');
             if (!tbody) return; tbody.innerHTML = '';
+            rowCount.textContent = reservations.length;
             const sorted = sortData(reservations);
             sorted.forEach(item => {
                 const tr = document.createElement('tr');
-                tr.className = `border-b ${item.departure ? 'bg-slate-100 text-slate-400' : item.arrival ? 'bg-emerald-50 text-slate-800 border-l-4 border-emerald-500' : 'bg-white'}`;
-                
+                tr.className = `row-hover border-b ${item.departure ? 'bg-slate-100 text-slate-400' : item.arrival ? 'bg-emerald-50 text-slate-800 border-l-[5px] border-emerald-500' : 'bg-white'}`;
                 let stockColor = item.stock === '広場' ? 'text-rose-600 font-bold' : 'text-slate-800';
+                if (item.departure) stockColor = 'text-slate-400/75';
+
                 const selectStockHTML = `
-                    <select onchange="updateField('${item.id}', 'stock', this.value)" class="w-full bg-transparent text-center ${stockColor}">
-                        <option value="" ${item.stock === '' ? 'selected' : ''}>ー</option>
-                        <option value="広場" ${item.stock === '広場' ? 'selected' : ''}>広場</option>
+                    <select onchange="updateField('${item.id}', 'stock', this.value)" class="w-full h-8 bg-transparent text-center cursor-pointer ${stockColor}">
+                        <option value="">ー</option><option value="広場">広場</option>
                     </select>
                 `;
 
                 tr.innerHTML = `
-                    <td class="p-2 text-center"><input type="checkbox" ${item.arrival ? 'checked' : ''} onchange="toggleArrival('${item.id}', this.checked)"></td>
-                    <td class="p-2 text-center"><input type="checkbox" ${item.departure ? 'checked' : ''} onchange="toggleDeparture('${item.id}', this.checked)"></td>
-                    <td class="p-1"><input type="text" value="${item.time || ''}" onchange="updateField('${item.id}', 'time', this.value)" class="w-full text-center bg-transparent"></td>
-                    <td class="p-1"><input type="text" value="${item.company || ''}" onchange="updateField('${item.id}', 'company', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1"><input type="text" value="${item.name || ''}" onchange="updateField('${item.id}', 'name', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1"><input type="text" value="${item.carType || ''}" onchange="updateField('${item.id}', 'carType', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1"><input type="text" value="${item.carNum || ''}" onchange="updateField('${item.id}', 'carNum', this.value)" class="w-full text-center bg-transparent"></td>
-                    <td class="p-1">${selectStockHTML}</td>
-                    <td class="p-1"><input type="text" value="${item.memo || ''}" onchange="updateField('${item.id}', 'memo', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1"><input type="text" value="${item.returnStore || ''}" onchange="updateField('${item.id}', 'returnStore', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1"><input type="text" value="${item.attach1 || ''}" onchange="updateField('${item.id}', 'attach1', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1"><input type="text" value="${item.attach2 || ''}" onchange="updateField('${item.id}', 'attach2', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1"><input type="text" value="${item.attach3 || ''}" onchange="updateField('${item.id}', 'attach3', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-2 text-center border-r"><input type="checkbox" ${item.arrival ? 'checked' : ''} onchange="toggleArrival('${item.id}', this.checked)"></td>
+                    <td class="p-2 text-center border-r"><input type="checkbox" ${item.departure ? 'checked' : ''} onchange="toggleDeparture('${item.id}', this.checked)"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.time||''}" onchange="updateField('${item.id}', 'time', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.company||''}" onchange="updateField('${item.id}', 'company', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.name||''}" onchange="updateField('${item.id}', 'name', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.carType||''}" onchange="updateField('${item.id}', 'carType', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.carNum||''}" onchange="updateField('${item.id}', 'carNum', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-0.5 border-r">${selectStockHTML}</td>
+                    <td class="p-1 border-r"><input type="text" value="${item.memo||''}" onchange="updateField('${item.id}', 'memo', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.returnStore||''}" onchange="updateField('${item.id}', 'returnStore', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.attach1||''}" onchange="updateField('${item.id}', 'attach1', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.attach2||''}" onchange="updateField('${item.id}', 'attach2', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.attach3||''}" onchange="updateField('${item.id}', 'attach3', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-2 text-center"><button onclick="deleteRow('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td>
                 `;
                 tbody.appendChild(tr);
+                const sel = tr.querySelector('select'); if(sel) sel.value = item.stock || '';
             });
         }
 
-        // --- データ更新処理 ---
-        window.toggleArrival = async function(id, checked) {
-            const val = { arrival: checked, arrivalTimestamp: checked ? Date.now() : null };
-            if (isCloudMode) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), val); }
+        // --- 各種データ操作関数 ---
+        window.toggleArrival = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); };
+        window.toggleDeparture = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { departure: checked }); };
+        window.updateField = async function(id, field, value) { 
+            let v = value.trim(); if(field==='stock' && v==='西口広場前店') v='広場';
+            const d = {}; d[field] = v; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), d); 
         };
-        window.toggleDeparture = async function(id, checked) {
-            if (isCloudMode) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { departure: checked }); }
-        };
-        window.updateField = async function(id, field, value) {
-            const d = {}; d[field] = value.trim();
-            if (isCloudMode) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), d); }
-        };
-        window.deleteRow = async function(id) {
-            if (isCloudMode) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id)); }
-        };
+        window.deleteRow = async function(id) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id)); };
         window.addEmptyReservation = async function() {
             const nid = 'res_' + Date.now();
             const newItem = { id: nid, arrival: false, departure: false, time: "12:00", company: "新規顧客", name: "ー", carType: "ー", carNum: "ー", stock: "", memo: "ー", returnStore: "ー", attach1: "ー", attach2: "ー", attach3: "ー" };
-            if (isCloudMode) { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), newItem); }
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), newItem);
         };
 
-        window.bypassLockToLocalMode = function() {
-            isCloudMode = false;
-            document.getElementById('cloud-lock-screen').classList.add('hidden');
-            document.getElementById('admin-view').classList.remove('pointer-events-none');
-            document.getElementById('admin-view').style.opacity = "1";
-            document.getElementById('sync-indicator').textContent = "ローカル保存モード";
+        window.processExcelImport = async function() {
+            const rawText = document.getElementById('import-area').value.trim();
+            const lines = rawText.split('\n'); if (lines.length < 2) return;
+            const headers = lines[0].split('\t'); const batch = writeBatch(db);
+            
+            // 旧データ削除
+            reservations.forEach(r => { batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', r.id)); });
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                const cells = lines[i].split('\t');
+                const nid = 'res_' + Date.now() + '_' + i;
+                
+                let timeVal = cells[0] ? cells[0].trim() : "12:00";
+                let stockVal = cells[5] ? cells[5].trim() : "";
+                if(stockVal === "西口広場前店") stockVal = "広場";
+
+                const item = {
+                    id: nid, arrival: false, departure: false,
+                    time: timeVal, company: cells[1]||"ー", name: cells[2]||"ー",
+                    carType: cells[3]||"ー", carNum: cells[4]||"ー", stock: stockVal,
+                    memo: cells[6]||"ー", returnStore: cells[7]||"ー",
+                    attach1: cells[8]||"ー", attach2: cells[10]||"ー", attach3: cells[12]||"ー"
+                };
+                batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), item);
+            }
+            await batch.commit(); closeImportModal(); showToast("インポート完了しました！");
         };
 
-        // シンセサイザー音源再生
+        function updateStats() {
+            document.getElementById('stat-total').textContent = reservations.length;
+            document.getElementById('stat-active').textContent = reservations.filter(r=>r.arrival && !r.departure).length;
+            document.getElementById('stat-completed').textContent = reservations.filter(r=>r.departure).length;
+        }
+
         function playSynthSound() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -337,12 +393,20 @@
             } catch (e) {}
         }
 
+        window.openImportModal = function() { document.getElementById('import-modal').classList.remove('hidden'); };
+        window.closeImportModal = function() { document.getElementById('import-modal').classList.add('hidden'); };
+        window.confirmClearData = function() { document.getElementById('clear-modal').classList.remove('hidden'); };
+        window.closeClearModal = function() { document.getElementById('clear-modal').classList.add('hidden'); };
+        window.clearAllData = async function() {
+            const batch = writeBatch(db);
+            reservations.forEach(r => { batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', r.id)); });
+            await batch.commit(); closeClearModal();
+        };
+        function showToast(m) { document.getElementById('toast-msg').textContent = m; document.getElementById('toast').classList.remove('translate-y-20', 'opacity-0'); setTimeout(()=>document.getElementById('toast').classList.add('translate-y-20', 'opacity-0'), 3000); }
+
         window.onload = async function() {
             setupEnvironment();
-            if (isCloudMode) {
-                await signInAnonymously(auth);
-                initRealtimeSync();
-            }
+            if (isCloudMode) { await signInAnonymously(auth); initRealtimeSync(); }
         };
     </script>
 </body>

@@ -66,6 +66,9 @@
                 </div>
 
                 <div class="flex items-center gap-2 flex-wrap">
+                    <button onclick="forceSyncCloudData()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-indigo-500">
+                        <i class="fa-solid fa-rotate animate-spin-slow"></i> 🔄 クラウド強制同期
+                    </button>
                     <button onclick="addEmptyReservation()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-emerald-500">
                         <i class="fa-solid fa-plus"></i> 予約を直接追加
                     </button>
@@ -151,12 +154,13 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot, writeBatch, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot, getDocs, writeBatch, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         let reservations = [];
         let currentUser = null;
         let lastArrivalState = {}; 
         let db = null; let auth = null; let appId = 'default-app-id';
+        let unsubscribeRealtime = null; // 監視解除用
 
         const headerKeywords = {
             time: ["出発予定年月日時分", "予約時間", "時間"],
@@ -198,6 +202,33 @@
             }
         }
 
+        // 🌟【新機能】クラウドのデータを手動で強制的に1発引っ張ってくる関数
+        window.forceSyncCloudData = async function() {
+            document.getElementById('sync-indicator').textContent = "⚡ 強制同期中...";
+            document.getElementById('sync-indicator').className = "text-[10px] text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg font-bold animate-pulse";
+            
+            try {
+                const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
+                // クラウドから直接1回限りの最新データを即座に取得
+                const querySnapshot = await getDocs(collectionRef);
+                const updated = [];
+                querySnapshot.forEach((doc) => { updated.push({ id: doc.id, ...doc.data() }); });
+                
+                reservations = updated;
+                renderTable();
+                updateStats();
+                
+                showToast("クラウドと強制同期しました！最新状態です。");
+            } catch (error) {
+                console.error("Sync error:", error);
+                showToast("同期に失敗しました。電波環境を確認してください。");
+            } finally {
+                document.getElementById('sync-indicator').className = "text-[10px] text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg font-bold";
+                document.getElementById('sync-indicator').textContent = "クラウド共有LIVE";
+            }
+        };
+
+        // 通常の環境セットアップ
         function setupEnvironment() {
             appId = firebaseConfig.projectId;
             const app = initializeApp(firebaseConfig);
@@ -210,7 +241,11 @@
                 currentUser = user;
                 if (user) {
                     const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
-                    onSnapshot(collectionRef, (snapshot) => {
+                    
+                    // 既存の監視があれば一度解除
+                    if (unsubscribeRealtime) unsubscribeRealtime();
+                    
+                    unsubscribeRealtime = onSnapshot(collectionRef, (snapshot) => {
                         const updated = [];
                         snapshot.forEach((doc) => { updated.push({ id: doc.id, ...doc.data() }); });
                         
@@ -266,15 +301,12 @@
                 const tr = document.createElement('tr');
                 tr.className = `row-hover border-b ${item.departure ? 'bg-slate-100 text-slate-400' : item.arrival ? 'bg-emerald-50 text-slate-800 border-l-[5px] border-emerald-500' : 'bg-white'}`;
                 
-                // 在庫の赤字スタイル判定（広場のみ適用）
                 const currentStock = item.stock || '';
                 const isHiroba = currentStock === '広場' || currentStock === '西口広場前店';
                 let stockTextColor = isHiroba ? 'text-rose-600 font-black text-center' : 'text-slate-800 text-center font-medium';
                 if (item.departure) stockTextColor = 'text-slate-400/75 text-center';
 
-                // 🌟 新しくご指定いただいた半角・全角等の表記に完全一致した5大拠点
                 const fixedOptions = ["広場", "ﾘｯﾄP", "ママカリＰ", "広場3P", "新保"];
-                
                 let stockSelectHTML = `<select onchange="updateField('${item.id}', 'stock', this.value)" class="w-full h-8 bg-transparent cursor-pointer ${stockTextColor}">`;
                 
                 if (currentStock === '' || currentStock === 'ー' || fixedOptions.includes(currentStock)) {
@@ -284,7 +316,6 @@
                         stockSelectHTML += `<option value="${opt}" ${selected}>${opt}</option>`;
                     });
                 } else {
-                    // エクセルから上記以外の特殊な名前が流れてきた場合も一番上に残す
                     stockSelectHTML += `<option value="${currentStock}" selected>${currentStock}</option>`;
                     fixedOptions.forEach(opt => {
                         stockSelectHTML += `<option value="${opt}">${opt}</option>`;
@@ -301,9 +332,7 @@
                     <td class="p-1 border-r"><input type="text" value="${item.name||''}" onchange="updateField('${item.id}', 'name', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.carType||''}" onchange="updateField('${item.id}', 'carType', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.carNum||''}" onchange="updateField('${item.id}', 'carNum', this.value)" class="w-full text-center bg-transparent"></td>
-                    
                     <td class="p-0.5 border-r">${stockSelectHTML}</td>
-                    
                     <td class="p-1 border-r"><input type="text" value="${item.memo||''}" onchange="updateField('${item.id}', 'memo', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.returnStore||''}" onchange="updateField('${item.id}', 'returnStore', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.attach1||''}" onchange="updateField('${item.id}', 'attach1', this.value)" class="w-full bg-transparent"></td>
@@ -360,7 +389,7 @@
             await batch.commit(); 
             closeImportModal(); 
             document.getElementById('import-area').value = "";
-            showToast("指定の文字列表記でプルダウンを設定しました！");
+            showToast("同期データを初期化し、最新エクセルを反映しました！");
         };
 
         window.toggleArrival = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); };

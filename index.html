@@ -67,7 +67,7 @@
 
                 <div class="flex items-center gap-2 flex-wrap">
                     <button onclick="forceSyncCloudData()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-indigo-500">
-                        <i class="fa-solid fa-rotate animate-spin-slow"></i> 🔄 クラウド強制同期
+                        <i class="fa-solid fa-rotate"></i> 🔄 クラウド強制同期
                     </button>
                     <button onclick="addEmptyReservation()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-emerald-500">
                         <i class="fa-solid fa-plus"></i> 予約を直接追加
@@ -105,17 +105,17 @@
                 </div>
 
                 <div class="flex-1 overflow-x-auto min-h-[400px]">
-                    <table class="w-full text-left border-collapse table-fixed min-w-[1740px]">
+                    <table class="w-full text-left border-collapse table-fixed min-w-[1720px]">
                         <thead>
                             <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider font-bold">
                                 <th class="p-4 w-16 text-center font-bold">来店</th>
                                 <th class="p-4 w-16 text-center font-bold">出発済</th>
-                                <th class="p-4 w-24 text-center font-bold">予約時間</th>
+                                <th class="p-4 w-20 text-center font-bold">予約時間</th> <th class="p-4 w-24 text-center font-bold">予約NO</th>
                                 <th class="p-4 w-48 text-center font-bold">お客様名</th>
-                                <th class="p-4 w-52 text-center font-bold">配車住所</th>
+                                <th class="p-4 w-40 text-center font-bold">配車住所</th>
                                 <th class="p-4 w-36 text-center font-bold">車種</th>
                                 <th class="p-4 w-32 text-center font-bold">車番</th>
-                                <th class="p-4 w-36 text-center font-bold">在庫</th>
+                                <th class="p-4 w-24 text-center font-bold">在庫</th>
                                 <th class="p-4 w-80 text-center font-bold">備考</th>
                                 <th class="p-4 w-36 text-center font-bold">返却店舗</th>
                                 <th class="p-4 w-36 text-center font-bold">添付品1</th>
@@ -160,10 +160,11 @@
         let currentUser = null;
         let lastArrivalState = {}; 
         let db = null; let auth = null; let appId = 'default-app-id';
-        let unsubscribeRealtime = null; // 監視解除用
+        let unsubscribeRealtime = null;
 
         const headerKeywords = {
             time: ["出発予定年月日時分", "予約時間", "時間"],
+            bookingNo: ["予約番号", "予約Ｎｏ", "予約NO", "予約No"],
             company: ["借受人名", "お客様名", "会社名"],
             name: ["配車予定住所", "配車住所"],
             carType: ["車名", "車種"],
@@ -202,33 +203,24 @@
             }
         }
 
-        // 🌟【新機能】クラウドのデータを手動で強制的に1発引っ張ってくる関数
         window.forceSyncCloudData = async function() {
             document.getElementById('sync-indicator').textContent = "⚡ 強制同期中...";
             document.getElementById('sync-indicator').className = "text-[10px] text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg font-bold animate-pulse";
-            
             try {
                 const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
-                // クラウドから直接1回限りの最新データを即座に取得
                 const querySnapshot = await getDocs(collectionRef);
                 const updated = [];
                 querySnapshot.forEach((doc) => { updated.push({ id: doc.id, ...doc.data() }); });
-                
-                reservations = updated;
-                renderTable();
-                updateStats();
-                
+                reservations = updated; renderTable(); updateStats();
                 showToast("クラウドと強制同期しました！最新状態です。");
             } catch (error) {
-                console.error("Sync error:", error);
-                showToast("同期に失敗しました。電波環境を確認してください。");
+                showToast("同期に失敗しました。");
             } finally {
                 document.getElementById('sync-indicator').className = "text-[10px] text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg font-bold";
                 document.getElementById('sync-indicator').textContent = "クラウド共有LIVE";
             }
         };
 
-        // 通常の環境セットアップ
         function setupEnvironment() {
             appId = firebaseConfig.projectId;
             const app = initializeApp(firebaseConfig);
@@ -241,10 +233,7 @@
                 currentUser = user;
                 if (user) {
                     const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
-                    
-                    // 既存の監視があれば一度解除
                     if (unsubscribeRealtime) unsubscribeRealtime();
-                    
                     unsubscribeRealtime = onSnapshot(collectionRef, (snapshot) => {
                         const updated = [];
                         snapshot.forEach((doc) => { updated.push({ id: doc.id, ...doc.data() }); });
@@ -265,6 +254,23 @@
             });
         }
 
+        function cleanTimeFormat(t) {
+            if (!t) return '99:99';
+            let match = t.match(/(\d{1,2}):(\d{2})/);
+            if (match) {
+                let h = match[1].padStart(2, '0');
+                let m = match[2];
+                return `${h}:${m}`;
+            }
+            return t.trim().padStart(5, '0');
+        }
+
+        // 🌟 車番から半角スペース、全角スペース、タブなどのあらゆる空白文字を除去する関数
+        function removeAllSpaces(str) {
+            if (!str) return 'ー';
+            return str.replace(/[\s\u3000\u00A0\u2002\u2003\u2009]+/g, '').trim();
+        }
+
         function sortData(list) {
             return [...list].sort((a, b) => {
                 const aDep = a.departure ? 1 : 0; const bDep = b.departure ? 1 : 0;
@@ -276,18 +282,7 @@
                 if (a.arrival && !b.arrival) return -1;
                 if (!a.arrival && b.arrival) return 1;
 
-                const cleanTime = (t) => {
-                    if (!t) return '99:99';
-                    let match = t.match(/(\d{1,2}):(\d{2})/);
-                    if (match) {
-                        let h = match[1].padStart(2, '0');
-                        let m = match[2];
-                        return `${h}:${m}`;
-                    }
-                    return t.padStart(5, '0');
-                };
-
-                return cleanTime(a.time).localeCompare(cleanTime(b.time));
+                return cleanTimeFormat(a.time).localeCompare(cleanTimeFormat(b.time));
             });
         }
 
@@ -303,8 +298,14 @@
                 
                 const currentStock = item.stock || '';
                 const isHiroba = currentStock === '広場' || currentStock === '西口広場前店';
-                let stockTextColor = isHiroba ? 'text-rose-600 font-black text-center' : 'text-slate-800 text-center font-medium';
-                if (item.departure) stockTextColor = 'text-slate-400/75 text-center';
+                
+                let stockTextColor = 'text-slate-800 text-center font-normal';
+                if (currentStock && currentStock !== 'ー' && !isHiroba) {
+                    stockTextColor = 'text-rose-600 text-center font-normal'; 
+                } else if (isHiroba) {
+                    stockTextColor = 'text-slate-900 text-center font-normal'; 
+                }
+                if (item.departure) stockTextColor = 'text-slate-400/75 text-center font-normal';
 
                 const fixedOptions = ["広場", "ﾘｯﾄP", "ママカリＰ", "広場3P", "新保"];
                 let stockSelectHTML = `<select onchange="updateField('${item.id}', 'stock', this.value)" class="w-full h-8 bg-transparent cursor-pointer ${stockTextColor}">`;
@@ -324,20 +325,28 @@
                 }
                 stockSelectHTML += `</select>`;
 
+                const displayTime = cleanTimeFormat(item.time);
+                
+                // 表示用データの車番からも確実にスペースをカット
+                const displayCarNum = removeAllSpaces(item.carNum);
+
                 tr.innerHTML = `
                     <td class="p-2 text-center border-r"><input type="checkbox" ${item.arrival ? 'checked' : ''} onchange="toggleArrival('${item.id}', this.checked)"></td>
                     <td class="p-2 text-center border-r"><input type="checkbox" ${item.departure ? 'checked' : ''} onchange="toggleDeparture('${item.id}', this.checked)"></td>
-                    <td class="p-1 border-r"><input type="text" value="${item.time||''}" onchange="updateField('${item.id}', 'time', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${displayTime}" onchange="updateField('${item.id}', 'time', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.bookingNo||'ー'}" onchange="updateField('${item.id}', 'bookingNo', this.value)" class="w-full text-center bg-transparent font-mono text-[11px] text-slate-500"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.company||''}" onchange="updateField('${item.id}', 'company', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.name||''}" onchange="updateField('${item.id}', 'name', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.carType||''}" onchange="updateField('${item.id}', 'carType', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1 border-r"><input type="text" value="${item.carNum||''}" onchange="updateField('${item.id}', 'carNum', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${displayCarNum}" onchange="updateField('${item.id}', 'carNum', this.value)" class="w-full text-center bg-transparent"></td>
+                    
                     <td class="p-0.5 border-r">${stockSelectHTML}</td>
+                    
                     <td class="p-1 border-r"><input type="text" value="${item.memo||''}" onchange="updateField('${item.id}', 'memo', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1 border-r"><input type="text" value="${item.returnStore||''}" onchange="updateField('${item.id}', 'returnStore', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1 border-r"><input type="text" value="${item.attach1||''}" onchange="updateField('${item.id}', 'attach1', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1 border-r"><input type="text" value="${item.attach2||''}" onchange="updateField('${item.id}', 'attach2', this.value)" class="w-full bg-transparent"></td>
-                    <td class="p-1 border-r"><input type="text" value="${item.attach3||''}" onchange="updateField('${item.id}', 'attach3', this.value)" class="w-full bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.returnStore||''}" onchange="updateField('${item.id}', 'returnStore', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.attach1||''}" onchange="updateField('${item.id}', 'attach1', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.attach2||''}" onchange="updateField('${item.id}', 'attach2', this.value)" class="w-full text-center bg-transparent"></td>
+                    <td class="p-1 border-r"><input type="text" value="${item.attach3||''}" onchange="updateField('${item.id}', 'attach3', this.value)" class="w-full text-center bg-transparent"></td>
                     <td class="p-2 text-center"><button onclick="deleteRow('${item.id}')" class="text-slate-400 hover:text-rose-600"><i class="fa-solid fa-trash-can"></i></button></td>
                 `;
                 tbody.appendChild(tr);
@@ -369,13 +378,18 @@
                 let stockVal = indices.stock !== -1 && cells[indices.stock] ? cells[indices.stock].trim() : "";
                 if(stockVal === "西口広場前店") stockVal = "広場";
 
+                // インポート時に全ての空白を確実に消去
+                let rawCarNum = indices.carNum !== -1 && cells[indices.carNum] ? cells[indices.carNum] : "ー";
+                let carNumVal = removeAllSpaces(rawCarNum);
+
                 const item = {
                     id: nid, arrival: false, departure: false,
                     time: timeVal,
+                    bookingNo: indices.bookingNo !== -1 && cells[indices.bookingNo] ? cells[indices.bookingNo].trim() : "ー",
                     company: indices.company !== -1 && cells[indices.company] ? cells[indices.company].trim() : "ー",
                     name: indices.name !== -1 && cells[indices.name] ? cells[indices.name].trim() : "ー",
                     carType: indices.carType !== -1 && cells[indices.carType] ? cells[indices.carType].trim() : "ー",
-                    carNum: indices.carNum !== -1 && cells[indices.carNum] ? cells[indices.carNum].trim() : "ー",
+                    carNum: carNumVal,
                     stock: stockVal,
                     memo: indices.memo !== -1 && cells[indices.memo] ? cells[indices.memo].trim() : "ー",
                     returnStore: indices.returnStore !== -1 && cells[indices.returnStore] ? cells[indices.returnStore].trim() : "ー",
@@ -385,23 +399,23 @@
                 };
                 batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), item);
             }
-            
-            await batch.commit(); 
-            closeImportModal(); 
-            document.getElementById('import-area').value = "";
-            showToast("同期データを初期化し、最新エクセルを反映しました！");
+            await batch.commit(); closeImportModal(); document.getElementById('import-area').value = ""; showToast("車番を詰め、レイアウトを最適化してインポートしました！");
         };
 
         window.toggleArrival = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); };
         window.toggleDeparture = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { departure: checked }); };
+        
         window.updateField = async function(id, field, value) { 
-            let v = value.trim(); if(field=='stock' && v=='西口広場前店') v='広場';
+            let v = value.trim(); 
+            if(field=='stock' && v=='西口広場前店') v='広場';
+            if(field=='carNum') v = removeAllSpaces(v); // 🌟 手動で書き換えた際にも、全てのスペースを即時自動カット
             const d = {}; d[field] = v; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), d); 
         };
+        
         window.deleteRow = async function(id) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id)); };
         window.addEmptyReservation = async function() {
             const nid = 'res_' + Date.now();
-            const newItem = { id: nid, arrival: false, departure: false, time: "12:00", company: "新規顧客", name: "ー", carType: "ー", carNum: "ー", stock: "", memo: "ー", returnStore: "ー", attach1: "ー", attach2: "ー", attach3: "ー" };
+            const newItem = { id: nid, arrival: false, departure: false, time: "12:00", bookingNo: "ー", company: "新規顧客", name: "ー", carType: "ー", carNum: "ー", stock: "", memo: "ー", returnStore: "ー", attach1: "ー", attach2: "ー", attach3: "ー" };
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), newItem);
         };
 

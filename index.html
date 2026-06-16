@@ -69,7 +69,7 @@
                     <button onclick="forceSyncCloudData()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-indigo-500">
                         <i class="fa-solid fa-rotate"></i> 🔄 クラウド強制同期
                     </button>
-                    <button onclick="addEmptyReservation()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-emerald-500">
+                    <button onclick="openAddModal()" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-emerald-500">
                         <i class="fa-solid fa-plus"></i> 予約を直接追加
                     </button>
                     <button onclick="openImportModal()" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-blue-500">
@@ -83,7 +83,7 @@
         </header>
 
         <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
-            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
                     <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-list-check"></i></div>
                     <div><span class="text-[10px] text-slate-400 font-bold tracking-wider block">本日の総予約数</span><span id="stat-total" class="text-2xl font-black text-slate-800">0</span> <span class="text-xs text-slate-400 font-medium">件</span></div>
@@ -95,6 +95,18 @@
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
                     <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-lg shrink-0 border border-emerald-100"><i class="fa-solid fa-clipboard-check"></i></div>
                     <div><span class="text-[10px] text-slate-400 font-bold tracking-wider block">出発完了</span><span id="stat-completed" class="text-2xl font-black text-emerald-600">0</span> <span class="text-xs text-slate-400 font-medium">件</span></div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-lg shrink-0 border border-indigo-100"><i class="fa-solid fa-chart-line"></i></div>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center justify-between line-height-none mb-1">
+                            <span class="text-[10px] text-slate-400 font-bold tracking-wider block">本日の出発進捗率</span>
+                            <span class="text-[11px] font-bold text-slate-500"><span id="stat-progress-count" class="text-indigo-600 font-black">0/0</span> 件 (<span id="stat-progress-percent" class="font-black text-indigo-600">0%</span>)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden border border-slate-200/60 p-[1px]">
+                            <div id="stat-progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-500 ease-out" style="width: 0%"></div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -110,7 +122,8 @@
                             <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider font-bold">
                                 <th class="p-4 w-16 text-center font-bold">来店</th>
                                 <th class="p-4 w-16 text-center font-bold">出発済</th>
-                                <th class="p-4 w-20 text-center font-bold">予約時間</th> <th class="p-4 w-24 text-center font-bold">予約NO</th>
+                                <th class="p-4 w-20 text-center font-bold">予約時間</th>
+                                <th class="p-4 w-24 text-center font-bold">予約NO</th>
                                 <th class="p-4 w-48 text-center font-bold">お客様名</th>
                                 <th class="p-4 w-40 text-center font-bold">配車住所</th>
                                 <th class="p-4 w-36 text-center font-bold">車種</th>
@@ -142,6 +155,75 @@
         </div>
     </div>
 
+    <div id="add-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
+        <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 flex flex-col gap-4 my-8 animate-in fade-in zoom-in duration-200">
+            <div class="flex items-center justify-between border-b pb-3">
+                <h3 class="text-sm font-bold text-slate-800"><i class="fa-solid fa-square-plus text-emerald-500 mr-1.5"></i>新規予約の追加入力</h3>
+                <button onclick="closeAddModal()" class="text-slate-400 hover:text-slate-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">予約時間 (必須)</label>
+                    <input type="text" id="add-time" value="12:00" placeholder="10:00" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center font-bold text-slate-800">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">予約NO</label>
+                    <input type="text" id="add-bookingNo" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center">
+                </div>
+                <div class="col-span-2">
+                    <label class="block font-bold text-slate-600 mb-1">お客様名</label>
+                    <input type="text" id="add-company" placeholder="例：鈴木 様 / 〇〇株式会社" class="w-full p-2.5 border rounded-xl bg-slate-50">
+                </div>
+                <div class="col-span-2">
+                    <label class="block font-bold text-slate-600 mb-1">配車住所</label>
+                    <input type="text" id="add-name" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">車種</label>
+                    <input type="text" id="add-carType" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">車番</label>
+                    <input type="text" id="add-carNum" placeholder="岡山502わ1936" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center font-medium">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">在庫位置</label>
+                    <select id="add-stock" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center cursor-pointer">
+                        <option value="">ー</option>
+                        <option value="広場">広場</option>
+                        <option value="Ｄ">Ｄ</option>
+                        <option value="ﾘｯﾄP">ﾘｯﾄP</option>
+                        <option value="ママカリＰ">ママカリＰ</option>
+                        <option value="広場3P">広場3P</option>
+                        <option value="新保">新保</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">返却店舗</label>
+                    <input type="text" id="add-returnStore" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center">
+                </div>
+                
+                <div class="col-span-2">
+                    <label class="block font-bold text-slate-600 mb-1">備考</label>
+                    <input type="text" id="add-memo" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">添付品1</label>
+                    <input type="text" id="add-attach1" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">添付品2</label>
+                    <input type="text" id="add-attach2" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center">
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 pt-2 border-t mt-2">
+                <button onclick="closeAddModal()" class="px-4 py-2 bg-white border text-slate-700 text-xs font-bold rounded-lg">キャンセル</button>
+                <button onclick="submitNewReservationForm()" class="px-5 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg shadow-md flex items-center gap-1.5"><i class="fa-solid fa-check"></i> この内容で登録</button>
+            </div>
+        </div>
+    </div>
+
     <div id="clear-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
         <div class="bg-white max-w-sm w-full rounded-2xl p-6 text-center flex flex-col gap-4">
             <h3 class="font-bold text-slate-800 text-sm">共有データをすべて消去しますか？</h3>
@@ -162,6 +244,7 @@
         let db = null; let auth = null; let appId = 'default-app-id';
         let unsubscribeRealtime = null;
 
+        // 🌟 あらゆる表記（添付品名、添付品個数、〇〇１、〇〇1）に対応する超強力な表記揺れ吸収設定
         const headerKeywords = {
             time: ["出発予定年月日時分", "予約時間", "時間"],
             bookingNo: ["予約番号", "予約Ｎｏ", "予約NO", "予約No"],
@@ -172,9 +255,9 @@
             stock: ["在庫営業店舗名", "在庫営業店舗", "在庫"],
             memo: ["連絡事項", "備考"],
             returnStore: ["帰着予定営業店舗名", "返却店舗"],
-            attach1: ["添付品名１"],
-            attach2: ["添付品名２"],
-            attach3: ["添付品名３"]
+            attach1: ["添付品個数１", "添付品個数1", "添付品名１", "添付品名1", "個数１", "個数1"],
+            attach2: ["添付品個数２", "添付品個数2", "添付品名２", "添付品名2", "個数２", "個数2"],
+            attach3: ["添付品個数３", "添付品個数3", "添付品名３", "添付品名3", "個数３", "個数3"]
         };
 
         function checkNotificationSystem() {
@@ -265,10 +348,23 @@
             return t.trim().padStart(5, '0');
         }
 
-        // 🌟 車番から半角スペース、全角スペース、タブなどのあらゆる空白文字を除去する関数
         function removeAllSpaces(str) {
             if (!str) return 'ー';
             return str.replace(/[\s\u3000\u00A0\u2002\u2003\u2009]+/g, '').trim();
+        }
+
+        // 🌟 数字（0より大きい数値）なら一律で「×個数」にし、0や空欄なら「ー」にする確実な数値処理関数
+        function formatAttachValue(val) {
+            if (!val) return "ー";
+            const trimmed = val.trim();
+            if (trimmed === "" || trimmed === "0" || trimmed === "０" || trimmed === "ー") return "ー";
+            
+            // 全角数字を半角に変換した上で、純粋な数値かどうかを最終チェック
+            const normalized = trimmed.replace(/[０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
+            if (/^[1-9][0-9]*$/.test(normalized)) {
+                return "×" + normalized;
+            }
+            return trimmed;
         }
 
         function sortData(list) {
@@ -307,7 +403,7 @@
                 }
                 if (item.departure) stockTextColor = 'text-slate-400/75 text-center font-normal';
 
-                const fixedOptions = ["広場", "ﾘｯﾄP", "ママカリＰ", "広場3P", "新保"];
+                const fixedOptions = ["広場", "Ｄ", "ﾘｯﾄP", "ママカリＰ", "広場3P", "新保"];
                 let stockSelectHTML = `<select onchange="updateField('${item.id}', 'stock', this.value)" class="w-full h-8 bg-transparent cursor-pointer ${stockTextColor}">`;
                 
                 if (currentStock === '' || currentStock === 'ー' || fixedOptions.includes(currentStock)) {
@@ -326,8 +422,6 @@
                 stockSelectHTML += `</select>`;
 
                 const displayTime = cleanTimeFormat(item.time);
-                
-                // 表示用データの車番からも確実にスペースをカット
                 const displayCarNum = removeAllSpaces(item.carNum);
 
                 tr.innerHTML = `
@@ -377,10 +471,15 @@
 
                 let stockVal = indices.stock !== -1 && cells[indices.stock] ? cells[indices.stock].trim() : "";
                 if(stockVal === "西口広場前店") stockVal = "広場";
+                if(stockVal === "広場２P" || stockVal === "広場2P") stockVal = "Ｄ";
 
-                // インポート時に全ての空白を確実に消去
                 let rawCarNum = indices.carNum !== -1 && cells[indices.carNum] ? cells[indices.carNum] : "ー";
                 let carNumVal = removeAllSpaces(rawCarNum);
+
+                // 各セルの存在チェックと取得
+                let rawAttach1 = indices.attach1 !== -1 && cells[indices.attach1] ? cells[indices.attach1] : "ー";
+                let rawAttach2 = indices.attach2 !== -1 && cells[indices.attach2] ? cells[indices.attach2] : "ー";
+                let rawAttach3 = indices.attach3 !== -1 && cells[indices.attach3] ? cells[indices.attach3] : "ー";
 
                 const item = {
                     id: nid, arrival: false, departure: false,
@@ -393,13 +492,13 @@
                     stock: stockVal,
                     memo: indices.memo !== -1 && cells[indices.memo] ? cells[indices.memo].trim() : "ー",
                     returnStore: indices.returnStore !== -1 && cells[indices.returnStore] ? cells[indices.returnStore].trim() : "ー",
-                    attach1: indices.attach1 !== -1 && cells[indices.attach1] ? cells[indices.attach1].trim() : "ー",
-                    attach2: indices.attach2 !== -1 && cells[indices.attach2] ? cells[indices.attach2].trim() : "ー",
-                    attach3: indices.attach3 !== -1 && cells[indices.attach3] ? cells[indices.attach3].trim() : "ー"
+                    attach1: formatAttachValue(rawAttach1),
+                    attach2: formatAttachValue(rawAttach2),
+                    attach3: formatAttachValue(rawAttach3)
                 };
                 batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), item);
             }
-            await batch.commit(); closeImportModal(); document.getElementById('import-area').value = ""; showToast("車番を詰め、レイアウトを最適化してインポートしました！");
+            await batch.commit(); closeImportModal(); document.getElementById('import-area').value = ""; showToast("個数データを抽出し×表記で反映しました！");
         };
 
         window.toggleArrival = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); };
@@ -407,22 +506,79 @@
         
         window.updateField = async function(id, field, value) { 
             let v = value.trim(); 
-            if(field=='stock' && v=='西口広場前店') v='広場';
-            if(field=='carNum') v = removeAllSpaces(v); // 🌟 手動で書き換えた際にも、全てのスペースを即時自動カット
+            if(field=='stock') {
+                if(v=='西口広場前店') v='広場';
+                if(v=='広場２P' || v=='広場2P') v='Ｄ';
+            }
+            if(field=='carNum') v = removeAllSpaces(v);
+            if(field=='attach1' || field=='attach2' || field=='attach3') v = formatAttachValue(v);
+            
             const d = {}; d[field] = v; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), d); 
         };
         
         window.deleteRow = async function(id) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id)); };
-        window.addEmptyReservation = async function() {
+
+        window.openAddModal = function() {
+            document.getElementById('add-time').value = "12:00";
+            document.getElementById('add-bookingNo').value = "";
+            document.getElementById('add-company').value = "";
+            document.getElementById('add-name').value = "";
+            document.getElementById('add-carType').value = "";
+            document.getElementById('add-carNum').value = "";
+            document.getElementById('add-stock').value = "";
+            document.getElementById('add-returnStore').value = "";
+            document.getElementById('add-memo').value = "";
+            document.getElementById('add-attach1').value = "";
+            document.getElementById('add-attach2').value = "";
+            document.getElementById('add-modal').classList.remove('hidden');
+        };
+
+        window.closeAddModal = function() {
+            document.getElementById('add-modal').classList.add('hidden');
+        };
+
+        window.submitNewReservationForm = async function() {
             const nid = 'res_' + Date.now();
-            const newItem = { id: nid, arrival: false, departure: false, time: "12:00", bookingNo: "ー", company: "新規顧客", name: "ー", carType: "ー", carNum: "ー", stock: "", memo: "ー", returnStore: "ー", attach1: "ー", attach2: "ー", attach3: "ー" };
+            const timeVal = document.getElementById('add-time').value.trim() || "12:00";
+            const bookingNoVal = document.getElementById('add-bookingNo').value.trim() || "ー";
+            const companyVal = document.getElementById('add-company').value.trim() || "新規顧客";
+            const nameVal = document.getElementById('add-name').value.trim() || "ー";
+            const carTypeVal = document.getElementById('add-carType').value.trim() || "ー";
+            const carNumVal = removeAllSpaces(document.getElementById('add-carNum').value);
+            const stockVal = document.getElementById('add-stock').value;
+            const returnStoreVal = document.getElementById('add-returnStore').value.trim() || "ー";
+            const memoVal = document.getElementById('add-memo').value.trim() || "ー";
+            
+            const attach1Val = formatAttachValue(document.getElementById('add-attach1').value);
+            const attach2Val = formatAttachValue(document.getElementById('add-attach2').value);
+
+            const newItem = {
+                id: nid, arrival: false, departure: false,
+                time: timeVal, bookingNo: bookingNoVal, company: companyVal,
+                name: nameVal, carType: carTypeVal, carNum: carNumVal,
+                stock: stockVal, memo: memoVal, returnStore: returnStoreVal,
+                attach1: attach1Val, attach2: attach2Val, attach3: "ー"
+            };
+
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), newItem);
+            closeAddModal();
+            showToast(`${companyVal} 様の新規予約を登録しました！`);
         };
 
         function updateStats() {
-            document.getElementById('stat-total').textContent = reservations.length;
-            document.getElementById('stat-active').textContent = reservations.filter(r=>r.arrival && !r.departure).length;
-            document.getElementById('stat-completed').textContent = reservations.filter(r=>r.departure).length;
+            const total = reservations.length;
+            const active = reservations.filter(r=>r.arrival && !r.departure).length;
+            const completed = reservations.filter(r=>r.departure).length;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-active').textContent = active;
+            document.getElementById('stat-completed').textContent = completed;
+
+            document.getElementById('stat-progress-count').textContent = `${completed}/${total}`;
+
+            const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
+            document.getElementById('stat-progress-percent').textContent = `${percentage}%`;
+            document.getElementById('stat-progress-bar').style.width = `${percentage}%`;
         }
 
         function playSynthSound() {

@@ -117,7 +117,7 @@
                 </div>
 
                 <div class="flex-1 overflow-x-auto min-h-[400px]">
-                    <table class="w-full text-left border-collapse table-fixed min-w-[1720px]">
+                    <table class="w-full text-left border-collapse table-fixed min-w-[1780px]">
                         <thead>
                             <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider font-bold">
                                 <th class="p-4 w-16 text-center font-bold">来店</th>
@@ -126,7 +126,7 @@
                                 <th class="p-4 w-24 text-center font-bold">予約NO</th>
                                 <th class="p-4 w-48 text-center font-bold">お客様名</th>
                                 <th class="p-4 w-40 text-center font-bold">配車住所</th>
-                                <th class="p-4 w-36 text-center font-bold">車種</th>
+                                <th class="p-4 w-24 text-center font-bold">クラス</th> <th class="p-4 w-36 text-center font-bold">車種</th>
                                 <th class="p-4 w-32 text-center font-bold">車番</th>
                                 <th class="p-4 w-24 text-center font-bold">在庫</th>
                                 <th class="p-4 w-80 text-center font-bold">備考</th>
@@ -177,6 +177,10 @@
                 <div class="col-span-2">
                     <label class="block font-bold text-slate-600 mb-1">配車住所</label>
                     <input type="text" id="add-name" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50">
+                </div>
+                <div>
+                    <label class="block font-bold text-slate-600 mb-1">クラス</label>
+                    <input type="text" id="add-carClass" placeholder="C3-K" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center">
                 </div>
                 <div>
                     <label class="block font-bold text-slate-600 mb-1">車種</label>
@@ -244,12 +248,13 @@
         let db = null; let auth = null; let appId = 'default-app-id';
         let unsubscribeRealtime = null;
 
-        // 🌟 あらゆる表記（添付品名、添付品個数、〇〇１、〇〇1）に対応する超強力な表記揺れ吸収設定
+        // 🌟 予定－料金クラスコード抽出用のマッピング定義を追加
         const headerKeywords = {
             time: ["出発予定年月日時分", "予約時間", "時間"],
             bookingNo: ["予約番号", "予約Ｎｏ", "予約NO", "予約No"],
             company: ["借受人名", "お客様名", "会社名"],
             name: ["配車予定住所", "配車住所"],
+            carClass: ["予定－料金クラスコード", "料金クラスコード", "クラスコード", "クラス"], // 🌟追加
             carType: ["車名", "車種"],
             carNum: ["登録№（表示用）", "車番"],
             stock: ["在庫営業店舗名", "在庫営業店舗", "在庫"],
@@ -259,6 +264,9 @@
             attach2: ["添付品個数２", "添付品個数2", "添付品名２", "添付品名2", "個数２", "個数2"],
             attach3: ["添付品個数３", "添付品個数3", "添付品名３", "添付品名3", "個数３", "個数3"]
         };
+
+        // 🌟 特定クラスを赤字にするかどうかの判定用配列
+        const redClasses = ["C3-K", "C4-K", "C5-K", "SP1-K", "W3-K", "W4-K", "SUV3K", "SUV4K", "ZE3-K"];
 
         function checkNotificationSystem() {
             const bellArea = document.getElementById('mobile-bell-area');
@@ -353,13 +361,11 @@
             return str.replace(/[\s\u3000\u00A0\u2002\u2003\u2009]+/g, '').trim();
         }
 
-        // 🌟 数字（0より大きい数値）なら一律で「×個数」にし、0や空欄なら「ー」にする確実な数値処理関数
         function formatAttachValue(val) {
             if (!val) return "ー";
             const trimmed = val.trim();
             if (trimmed === "" || trimmed === "0" || trimmed === "０" || trimmed === "ー") return "ー";
             
-            // 全角数字を半角に変換した上で、純粋な数値かどうかを最終チェック
             const normalized = trimmed.replace(/[０-９]/g, (s) => String.fromCharCode(s.charCodeAt(0) - 0xFEE0));
             if (/^[1-9][0-9]*$/.test(normalized)) {
                 return "×" + normalized;
@@ -424,6 +430,11 @@
                 const displayTime = cleanTimeFormat(item.time);
                 const displayCarNum = removeAllSpaces(item.carNum);
 
+                // 🌟 クラスの赤字判定用スタイル
+                const currentClass = item.carClass || '';
+                let classTextColor = redClasses.includes(currentClass) ? 'text-rose-600 font-bold text-center' : 'text-slate-700 text-center';
+                if (item.departure) classTextColor = 'text-slate-400/75 text-center';
+
                 tr.innerHTML = `
                     <td class="p-2 text-center border-r"><input type="checkbox" ${item.arrival ? 'checked' : ''} onchange="toggleArrival('${item.id}', this.checked)"></td>
                     <td class="p-2 text-center border-r"><input type="checkbox" ${item.departure ? 'checked' : ''} onchange="toggleDeparture('${item.id}', this.checked)"></td>
@@ -431,6 +442,9 @@
                     <td class="p-1 border-r"><input type="text" value="${item.bookingNo||'ー'}" onchange="updateField('${item.id}', 'bookingNo', this.value)" class="w-full text-center bg-transparent font-mono text-[11px] text-slate-500"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.company||''}" onchange="updateField('${item.id}', 'company', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.name||''}" onchange="updateField('${item.id}', 'name', this.value)" class="w-full bg-transparent"></td>
+                    
+                    <td class="p-1 border-r"><input type="text" value="${currentClass}" onchange="updateField('${item.id}', 'carClass', this.value)" class="w-full bg-transparent ${classTextColor}"></td>
+                    
                     <td class="p-1 border-r"><input type="text" value="${item.carType||''}" onchange="updateField('${item.id}', 'carType', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${displayCarNum}" onchange="updateField('${item.id}', 'carNum', this.value)" class="w-full text-center bg-transparent"></td>
                     
@@ -476,7 +490,6 @@
                 let rawCarNum = indices.carNum !== -1 && cells[indices.carNum] ? cells[indices.carNum] : "ー";
                 let carNumVal = removeAllSpaces(rawCarNum);
 
-                // 各セルの存在チェックと取得
                 let rawAttach1 = indices.attach1 !== -1 && cells[indices.attach1] ? cells[indices.attach1] : "ー";
                 let rawAttach2 = indices.attach2 !== -1 && cells[indices.attach2] ? cells[indices.attach2] : "ー";
                 let rawAttach3 = indices.attach3 !== -1 && cells[indices.attach3] ? cells[indices.attach3] : "ー";
@@ -487,6 +500,7 @@
                     bookingNo: indices.bookingNo !== -1 && cells[indices.bookingNo] ? cells[indices.bookingNo].trim() : "ー",
                     company: indices.company !== -1 && cells[indices.company] ? cells[indices.company].trim() : "ー",
                     name: indices.name !== -1 && cells[indices.name] ? cells[indices.name].trim() : "ー",
+                    carClass: indices.carClass !== -1 && cells[indices.carClass] ? cells[indices.carClass].trim() : "ー", // 🌟 クラスコードインポート
                     carType: indices.carType !== -1 && cells[indices.carType] ? cells[indices.carType].trim() : "ー",
                     carNum: carNumVal,
                     stock: stockVal,
@@ -498,7 +512,7 @@
                 };
                 batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), item);
             }
-            await batch.commit(); closeImportModal(); document.getElementById('import-area').value = ""; showToast("個数データを抽出し×表記で反映しました！");
+            await batch.commit(); closeImportModal(); document.getElementById('import-area').value = ""; showToast("クラスコードを含む全データをインポートしました！");
         };
 
         window.toggleArrival = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); };
@@ -523,6 +537,7 @@
             document.getElementById('add-bookingNo').value = "";
             document.getElementById('add-company').value = "";
             document.getElementById('add-name').value = "";
+            document.getElementById('add-carClass').value = ""; // 🌟
             document.getElementById('add-carType').value = "";
             document.getElementById('add-carNum').value = "";
             document.getElementById('add-stock').value = "";
@@ -543,6 +558,7 @@
             const bookingNoVal = document.getElementById('add-bookingNo').value.trim() || "ー";
             const companyVal = document.getElementById('add-company').value.trim() || "新規顧客";
             const nameVal = document.getElementById('add-name').value.trim() || "ー";
+            const carClassVal = document.getElementById('add-carClass').value.trim() || "ー"; // 🌟
             const carTypeVal = document.getElementById('add-carType').value.trim() || "ー";
             const carNumVal = removeAllSpaces(document.getElementById('add-carNum').value);
             const stockVal = document.getElementById('add-stock').value;
@@ -555,7 +571,7 @@
             const newItem = {
                 id: nid, arrival: false, departure: false,
                 time: timeVal, bookingNo: bookingNoVal, company: companyVal,
-                name: nameVal, carType: carTypeVal, carNum: carNumVal,
+                name: nameVal, carClass: carClassVal, carType: carTypeVal, carNum: carNumVal,
                 stock: stockVal, memo: memoVal, returnStore: returnStoreVal,
                 attach1: attach1Val, attach2: attach2Val, attach3: "ー"
             };

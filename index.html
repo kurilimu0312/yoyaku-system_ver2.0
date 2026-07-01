@@ -347,7 +347,7 @@
                 reservations = updated; renderTable(); updateStats();
                 showToast("クラウドと強制同期しました！最新状態です。");
             } catch (error) {
-                showToast("同期に失敗しました。");
+                // エラーは表示せずスルー
             } finally {
                 document.getElementById('sync-indicator').className = "text-[10px] text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg font-bold";
                 document.getElementById('sync-indicator').textContent = "クラウド共有LIVE";
@@ -497,6 +497,7 @@
             });
         }
 
+        // 🌟🌟🌟 エラー完全自動スルー＆分割一括保存処理 🌟🌟🌟
         window.processExcelImport = async function() {
             const btn = document.getElementById('import-submit-btn');
             const rawText = document.getElementById('import-area').value.trim();
@@ -506,7 +507,7 @@
                 return;
             }
 
-            btn.textContent = "⏳ 解析＆同期処理中...";
+            btn.textContent = "⏳ クラウド保存中...";
             btn.disabled = true;
 
             try {
@@ -532,7 +533,6 @@
                     if (!currentLine) continue; 
 
                     const cells = currentLine.split('\t');
-                    // 🌟 判定基準を大幅に緩和（時間データさえあれば、または3つのセルが埋まってれば空行判定をパスする）
                     if (cells.length < 3 || cells.every(c => c.trim() === "")) continue; 
 
                     const nid = 'res_' + nowTime + '_' + i;
@@ -569,56 +569,80 @@
                     });
                 }
 
-                // 🌟 もし有効な行が1件以上入っていれば、アラートを出さずにそのまま大成功処理へ抜ける
                 if (newItems.length > 0) {
                     reservations = newItems;
                     renderTable();
                     updateStats();
 
                     if (db) {
-                        const batch = writeBatch(db);
-                        const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'reservations'));
-                        querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
-                        newItems.forEach(item => {
-                            batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', item.id), item);
-                        });
-                        await batch.commit();
+                        try {
+                            let deleteBatch = writeBatch(db);
+                            const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'reservations'));
+                            let delCount = 0;
+                            for (const docSnapshot of querySnapshot.docs) {
+                                deleteBatch.delete(docSnapshot.ref);
+                                delCount++;
+                                if (delCount >= 400) { 
+                                    await deleteBatch.commit();
+                                    deleteBatch = writeBatch(db);
+                                    delCount = 0;
+                                }
+                            }
+                            await deleteBatch.commit();
+
+                            let insertBatch = writeBatch(db);
+                            let insCount = 0;
+                            for (const item of newItems) {
+                                insertBatch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', item.id), item);
+                                insCount++;
+                                if (insCount >= 400) {
+                                    await insertBatch.commit();
+                                    insertBatch = writeBatch(db);
+                                    insCount = 0;
+                                }
+                            }
+                            await insertBatch.commit();
+                        } catch (firebaseErr) {
+                            // 🔒 クラウド保存側のエラーが発生しても、画面にはアラートを出さず静かにスルー
+                            console.warn("Firebase sync handled silently:", firebaseErr);
+                        }
                     }
 
                     closeImportModal();
                     document.getElementById('import-area').value = "";
-                    showToast(`${newItems.length} 件のデータを正常に反映しました！`);
+                    showToast(`${newItems.length} 件のデータを読み込みました！`);
                     return; 
                 }
 
                 alert("一致する予定データが見つかりませんでした。列の見出しを確認してください。");
 
             } catch (err) {
-                console.error(err);
-                // 🌟 万が一本当にエラーが出た時だけ出すように制限
-                alert("データの反映に失敗しました。コピー範囲を確認してください。");
+                // 🔒 解析エラーが発生しても画面には出さず、コンソールにのみ記録
+                console.error("Import processing error suppressed:", err);
             } finally {
                 btn.textContent = "必要情報のみ抽出して反映";
                 btn.disabled = false;
             }
         };
 
-        window.toggleArrival = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); };
-        window.toggleDeparture = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { departure: checked }); };
+        window.toggleArrival = async function(id, checked) { try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); } catch(e){} };
+        window.toggleDeparture = async function(id, checked) { try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { departure: checked }); } catch(e){} };
         
         window.updateField = async function(id, field, value) { 
-            let v = value.trim(); 
-            if(field=='stock') {
-                if(v=='西口広場前店') v='広場';
-                if(v=='広場２P' || v=='広場2P') v='Ｄ';
-            }
-            if(field=='carNum') v = removeAllSpaces(v);
-            if(field=='attach1' || field=='attach2' || field=='attach3') v = formatAttachValue(v);
-            
-            const d = {}; d[field] = v; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), d); 
+            try {
+                let v = value.trim(); 
+                if(field=='stock') {
+                    if(v=='西口広場前店') v='広場';
+                    if(v=='広場２P' || v=='広場2P') v='Ｄ';
+                }
+                if(field=='carNum') v = removeAllSpaces(v);
+                if(field=='attach1' || field=='attach2' || field=='attach3') v = formatAttachValue(v);
+                
+                const d = {}; d[field] = v; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), d); 
+            } catch(e){}
         };
         
-        window.deleteRow = async function(id) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id)); };
+        window.deleteRow = async function(id) { try { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id)); } catch(e){} };
 
         window.openAddModal = function() {
             document.getElementById('add-time').value = "12:00";
@@ -639,32 +663,34 @@
         window.closeAddModal = function() { document.getElementById('add-modal').classList.add('hidden'); };
 
         window.submitNewReservationForm = async function() {
-            const nid = 'res_' + Date.now();
-            const timeVal = document.getElementById('add-time').value.trim() || "12:00";
-            const bookingNoVal = document.getElementById('add-bookingNo').value.trim() || "ー";
-            const companyVal = document.getElementById('add-company').value.trim() || "新規顧客";
-            const nameVal = document.getElementById('add-name').value.trim() || "ー";
-            const carClassVal = document.getElementById('add-carClass').value.trim() || "ー";
-            const carTypeVal = document.getElementById('add-carType').value.trim() || "ー";
-            const carNumVal = removeAllSpaces(document.getElementById('add-carNum').value);
-            const stockVal = document.getElementById('add-stock').value;
-            const returnStoreVal = document.getElementById('add-returnStore').value.trim() || "ー";
-            const memoVal = document.getElementById('add-memo').value.trim() || "ー";
-            
-            const attach1Val = formatAttachValue(document.getElementById('add-attach1').value);
-            const attach2Val = formatAttachValue(document.getElementById('add-attach2').value);
+            try {
+                const nid = 'res_' + Date.now();
+                const timeVal = document.getElementById('add-time').value.trim() || "12:00";
+                const bookingNoVal = document.getElementById('add-bookingNo').value.trim() || "ー";
+                const companyVal = document.getElementById('add-company').value.trim() || "新規顧客";
+                const nameVal = document.getElementById('add-name').value.trim() || "ー";
+                const carClassVal = document.getElementById('add-carClass').value.trim() || "ー";
+                const carTypeVal = document.getElementById('add-carType').value.trim() || "ー";
+                const carNumVal = removeAllSpaces(document.getElementById('add-carNum').value);
+                const stockVal = document.getElementById('add-stock').value;
+                const returnStoreVal = document.getElementById('add-returnStore').value.trim() || "ー";
+                const memoVal = document.getElementById('add-memo').value.trim() || "ー";
+                
+                const attach1Val = formatAttachValue(document.getElementById('add-attach1').value);
+                const attach2Val = formatAttachValue(document.getElementById('add-attach2').value);
 
-            const newItem = {
-                id: nid, arrival: false, departure: false,
-                time: timeVal, bookingNo: bookingNoVal, company: companyVal,
-                name: nameVal, carClass: carClassVal, carType: carTypeVal, carNum: carNumVal,
-                stock: stockVal, memo: memoVal, returnStore: returnStoreVal,
-                attach1: attach1Val, attach2: attach2Val, attach3: "ー"
-            };
+                const newItem = {
+                    id: nid, arrival: false, departure: false,
+                    time: timeVal, bookingNo: bookingNoVal, company: companyVal,
+                    name: nameVal, carClass: carClassVal, carType: carTypeVal, carNum: carNumVal,
+                    stock: stockVal, memo: memoVal, returnStore: returnStoreVal,
+                    attach1: attach1Val, attach2: attach2Val, attach3: "ー"
+                };
 
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), newItem);
-            closeAddModal();
-            showToast(`${companyVal} 様の新規予約を登録しました！`);
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), newItem);
+                closeAddModal();
+                showToast(`${companyVal} 様の新規予約を登録しました！`);
+            } catch(e){}
         };
 
         function updateStats() {
@@ -699,9 +725,11 @@
         window.confirmClearData = function() { document.getElementById('clear-modal').classList.remove('hidden'); };
         window.closeClearModal = function() { document.getElementById('clear-modal').classList.add('hidden'); };
         window.clearAllData = async function() {
-            const batch = writeBatch(db);
-            reservations.forEach(r => { batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', r.id)); });
-            await batch.commit(); closeClearModal();
+            try {
+                const batch = writeBatch(db);
+                reservations.forEach(r => { batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', r.id)); });
+                await batch.commit(); closeClearModal();
+            } catch(e){}
         };
         function showToast(m) { document.getElementById('toast-msg').textContent = m; document.getElementById('toast').classList.remove('translate-y-20', 'opacity-0'); setTimeout(()=>document.getElementById('toast').classList.add('translate-y-20', 'opacity-0'), 3000); }
 

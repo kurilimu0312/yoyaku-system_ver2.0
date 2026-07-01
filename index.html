@@ -28,6 +28,11 @@
         ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
         .row-hover:hover { background-color: #f8fafc !important; }
     </style>
+
+    <script>
+        // 🔒 アプリのパスワード設定（今後はここを書き換えるだけで変更できます）
+        const CORRECT_PASSWORD = "0855";
+    </script>
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen font-sans flex flex-col antialiased">
 
@@ -38,11 +43,30 @@
             projectId: "auto-rent-system-52efe",
             storageBucket: "auto-rent-system-52efe.firebasestorage.app",
             messagingSenderId: "516757126612",
-            appId: "1:516757126612:web:2955f27d5266efbac86a42"
+            appId: "1:516757126612:web:2955f27d5266efbac86a41"
         };
     </script>
 
-    <div id="admin-view" class="flex-1 flex flex-col transition-opacity duration-300">
+    <div id="lock-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center p-4 z-9999">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center flex flex-col gap-5">
+            <div class="w-16 h-16 rounded-2xl bg-indigo-950 border border-indigo-800 text-indigo-400 flex items-center justify-center text-2xl mx-auto shadow-inner">
+                <i class="fa-solid fa-lock animate-pulse"></i>
+            </div>
+            <div>
+                <h2 class="text-white font-black tracking-tight text-base mb-1">CLOUD PRO 認証</h2>
+                <p class="text-slate-400 text-xs">システムを利用するにはパスワードを入力してください</p>
+            </div>
+            <div>
+                <input type="password" id="password-input" placeholder="••••" autofocus class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-center text-white text-xl tracking-widest focus:outline-none focus:border-indigo-500 font-mono transition">
+                <p id="password-error" class="text-rose-500 text-[11px] font-bold mt-2 hidden"><i class="fa-solid fa-triangle-exclamation"></i> パスワードが違います</p>
+            </div>
+            <button onclick="checkAppPassword()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-3 rounded-xl shadow-lg transition border border-indigo-500 cursor-pointer">
+                ロックを解除する
+            </button>
+        </div>
+    </div>
+
+    <div id="admin-view" class="hidden flex-1 flex flex-col transition-opacity duration-300">
         <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 px-6 py-4 shrink-0">
             <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
@@ -126,7 +150,8 @@
                                 <th class="p-4 w-24 text-center font-bold">予約NO</th>
                                 <th class="p-4 w-48 text-center font-bold">お客様名</th>
                                 <th class="p-4 w-40 text-center font-bold">配車住所</th>
-                                <th class="p-4 w-24 text-center font-bold">クラス</th> <th class="p-4 w-36 text-center font-bold">車種</th>
+                                <th class="p-4 w-24 text-center font-bold">クラス</th>
+                                <th class="p-4 w-36 text-center font-bold">車種</th>
                                 <th class="p-4 w-32 text-center font-bold">車番</th>
                                 <th class="p-4 w-24 text-center font-bold">在庫</th>
                                 <th class="p-4 w-80 text-center font-bold">備考</th>
@@ -248,25 +273,43 @@
         let db = null; let auth = null; let appId = 'default-app-id';
         let unsubscribeRealtime = null;
 
-        // 🌟 予定－料金クラスコード抽出用のマッピング定義を追加
         const headerKeywords = {
             time: ["出発予定年月日時分", "予約時間", "時間"],
             bookingNo: ["予約番号", "予約Ｎｏ", "予約NO", "予約No"],
             company: ["借受人名", "お客様名", "会社名"],
             name: ["配車予定住所", "配車住所"],
-            carClass: ["予定－料金クラスコード", "料金クラスコード", "クラスコード", "クラス"], // 🌟追加
+            carClass: ["予定－料金クラスコード", "料金クラスコード", "クラスコード", "クラス"],
             carType: ["車名", "車種"],
             carNum: ["登録№（表示用）", "車番"],
             stock: ["在庫営業店舗名", "在庫営業店舗", "在庫"],
             memo: ["連絡事項", "備考"],
             returnStore: ["帰着予定営業店舗名", "返却店舗"],
             attach1: ["添付品個数１", "添付品個数1", "添付品名１", "添付品名1", "個数１", "個数1"],
-            attach2: ["添付品個数２", "添付品個数2", "添付品名２", "添付品名2", "個数２", "個数2"],
+            attach2: ["添付品個数２", "添付品個_2", "添付品名２", "添付品名2", "個数２", "個数2"],
             attach3: ["添付品個数３", "添付品個数3", "添付品名３", "添付品名3", "個数３", "個数3"]
         };
 
-        // 🌟 特定クラスを赤字にするかどうかの判定用配列
         const redClasses = ["C3-K", "C4-K", "C5-K", "SP1-K", "W3-K", "W4-K", "SUV3K", "SUV4K", "ZE3-K"];
+
+        // 🔒 パスワードチェック関数
+        window.checkAppPassword = function() {
+            const input = document.getElementById('password-input').value;
+            const errorMsg = document.getElementById('password-error');
+            
+            if (input === CORRECT_PASSWORD) {
+                document.getElementById('lock-screen').classList.add('hidden');
+                document.getElementById('admin-view').classList.remove('hidden');
+                startSystemCore(); 
+            } else {
+                errorMsg.classList.remove('hidden');
+                document.getElementById('password-input').value = '';
+                document.getElementById('password-input').focus();
+            }
+        };
+
+        document.getElementById('password-input').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') { checkAppPassword(); }
+        });
 
         function checkNotificationSystem() {
             const bellArea = document.getElementById('mobile-bell-area');
@@ -312,14 +355,13 @@
             }
         };
 
-        function setupEnvironment() {
+        async function startSystemCore() {
             appId = firebaseConfig.projectId;
             const app = initializeApp(firebaseConfig);
             auth = getAuth(app); db = getFirestore(app);
             checkNotificationSystem();
-        }
-
-        function initRealtimeSync() {
+            
+            await signInAnonymously(auth);
             onAuthStateChanged(auth, (user) => {
                 currentUser = user;
                 if (user) {
@@ -430,7 +472,6 @@
                 const displayTime = cleanTimeFormat(item.time);
                 const displayCarNum = removeAllSpaces(item.carNum);
 
-                // 🌟 クラスの赤字判定用スタイル
                 const currentClass = item.carClass || '';
                 let classTextColor = redClasses.includes(currentClass) ? 'text-rose-600 font-bold text-center' : 'text-slate-700 text-center';
                 if (item.departure) classTextColor = 'text-slate-400/75 text-center';
@@ -442,14 +483,10 @@
                     <td class="p-1 border-r"><input type="text" value="${item.bookingNo||'ー'}" onchange="updateField('${item.id}', 'bookingNo', this.value)" class="w-full text-center bg-transparent font-mono text-[11px] text-slate-500"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.company||''}" onchange="updateField('${item.id}', 'company', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.name||''}" onchange="updateField('${item.id}', 'name', this.value)" class="w-full bg-transparent"></td>
-                    
                     <td class="p-1 border-r"><input type="text" value="${currentClass}" onchange="updateField('${item.id}', 'carClass', this.value)" class="w-full bg-transparent ${classTextColor}"></td>
-                    
                     <td class="p-1 border-r"><input type="text" value="${item.carType||''}" onchange="updateField('${item.id}', 'carType', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${displayCarNum}" onchange="updateField('${item.id}', 'carNum', this.value)" class="w-full text-center bg-transparent"></td>
-                    
                     <td class="p-0.5 border-r">${stockSelectHTML}</td>
-                    
                     <td class="p-1 border-r"><input type="text" value="${item.memo||''}" onchange="updateField('${item.id}', 'memo', this.value)" class="w-full bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.returnStore||''}" onchange="updateField('${item.id}', 'returnStore', this.value)" class="w-full text-center bg-transparent"></td>
                     <td class="p-1 border-r"><input type="text" value="${item.attach1||''}" onchange="updateField('${item.id}', 'attach1', this.value)" class="w-full text-center bg-transparent"></td>
@@ -500,7 +537,7 @@
                     bookingNo: indices.bookingNo !== -1 && cells[indices.bookingNo] ? cells[indices.bookingNo].trim() : "ー",
                     company: indices.company !== -1 && cells[indices.company] ? cells[indices.company].trim() : "ー",
                     name: indices.name !== -1 && cells[indices.name] ? cells[indices.name].trim() : "ー",
-                    carClass: indices.carClass !== -1 && cells[indices.carClass] ? cells[indices.carClass].trim() : "ー", // 🌟 クラスコードインポート
+                    carClass: indices.carClass !== -1 && cells[indices.carClass] ? cells[indices.carClass].trim() : "ー",
                     carType: indices.carType !== -1 && cells[indices.carType] ? cells[indices.carType].trim() : "ー",
                     carNum: carNumVal,
                     stock: stockVal,
@@ -537,7 +574,7 @@
             document.getElementById('add-bookingNo').value = "";
             document.getElementById('add-company').value = "";
             document.getElementById('add-name').value = "";
-            document.getElementById('add-carClass').value = ""; // 🌟
+            document.getElementById('add-carClass').value = "";
             document.getElementById('add-carType').value = "";
             document.getElementById('add-carNum').value = "";
             document.getElementById('add-stock').value = "";
@@ -558,7 +595,7 @@
             const bookingNoVal = document.getElementById('add-bookingNo').value.trim() || "ー";
             const companyVal = document.getElementById('add-company').value.trim() || "新規顧客";
             const nameVal = document.getElementById('add-name').value.trim() || "ー";
-            const carClassVal = document.getElementById('add-carClass').value.trim() || "ー"; // 🌟
+            const carClassVal = document.getElementById('add-carClass').value.trim() || "ー";
             const carTypeVal = document.getElementById('add-carType').value.trim() || "ー";
             const carNumVal = removeAllSpaces(document.getElementById('add-carNum').value);
             const stockVal = document.getElementById('add-stock').value;
@@ -619,10 +656,8 @@
         };
         function showToast(m) { document.getElementById('toast-msg').textContent = m; document.getElementById('toast').classList.remove('translate-y-20', 'opacity-0'); setTimeout(()=>document.getElementById('toast').classList.add('translate-y-20', 'opacity-0'), 3000); }
 
-        window.onload = async function() {
-            setupEnvironment();
-            await signInAnonymously(auth); 
-            initRealtimeSync();
+        window.onload = function() {
+            document.getElementById('password-input').focus();
         };
     </script>
 </body>

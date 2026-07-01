@@ -306,7 +306,6 @@
 
         const redClasses = ["C3-K", "C4-K", "C5-K", "SP1-K", "W3-K", "W4-K", "SUV3K", "SUV4K", "ZE3-K"];
 
-        // 🔒 パスワードチェック関数
         window.checkAppPassword = function() {
             const input = document.getElementById('password-input').value;
             const errorMsg = document.getElementById('password-error');
@@ -314,7 +313,7 @@
             if (input === CORRECT_PASSWORD) {
                 document.getElementById('lock-screen').classList.add('hidden');
                 document.getElementById('admin-view').classList.remove('hidden');
-                startSystemCore(); // 🌟認証成功時に確実にデータベース通信をスタート
+                startSystemCore(); 
             } else {
                 errorMsg.classList.remove('hidden');
                 document.getElementById('password-input').value = '';
@@ -370,7 +369,6 @@
             }
         };
 
-        // 🌟🌟🌟 リアルタイム同期（双方向ライブ通信）の確実なスタートコア 🌟🌟🌟
         async function startSystemCore() {
             appId = firebaseConfig.projectId;
             const app = initializeApp(firebaseConfig);
@@ -384,13 +382,13 @@
                     const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
                     if (unsubscribeRealtime) unsubscribeRealtime();
                     
-                    // 🌟他端末が更新した瞬間、手元の画面も1秒以内に書き換える監視機能
                     unsubscribeRealtime = onSnapshot(collectionRef, (snapshot) => {
                         const updated = [];
                         snapshot.forEach((doc) => { updated.push({ id: doc.id, ...doc.data() }); });
                         
                         updated.forEach(item => {
                             if (item.arrival && item.arrivalTimestamp) {
+                                // 🌟他端末から送られてきた新規の来店情報の場合のみ通知音を発動（手元重複音を防止）
                                 if (!lastArrivalState[item.id]) {
                                     playSynthSound();
                                     firePushNotification(item.company || "新規お客様");
@@ -433,23 +431,20 @@
             return trimmed;
         }
 
-        // 🌟🌟🌟 来店ボタンで上に上げる「全端末共通並び替えルール」の完全復活 🌟🌟🌟
         function sortData(list) {
             return [...list].sort((a, b) => {
-                // 1. 出発済のものは有無を言わさず一番下へ (a:出発済=1, b:出発済=0 なら 1-0=1 でaが下になる)
                 const aDep = a.departure ? 1 : 0; const bDep = b.departure ? 1 : 0;
                 if (aDep !== bDep) return aDep - bDep;
 
-                // 2. 両方とも来店している場合は、「来店ボタンを押した時刻が早い順」で並べる
                 if (a.arrival && b.arrival) {
-                    return (a.arrivalTimestamp || 0) - (b.arrivalTimestamp || 0);
+                    const aTime = Number(a.arrivalTimestamp) || 0;
+                    const bTime = Number(b.arrivalTimestamp) || 0;
+                    if (aTime !== bTime) return aTime - bTime;
                 }
                 
-                // 3. 片方だけ来店している場合は、来店している方を上に上げる
                 if (a.arrival && !b.arrival) return -1;
                 if (!a.arrival && b.arrival) return 1;
 
-                // 4. まだ来店していない同士は、「予約時間の早い順」で綺麗に並べる
                 return cleanTimeFormat(a.time).localeCompare(cleanTimeFormat(b.time));
             });
         }
@@ -459,6 +454,7 @@
             const rowCount = document.getElementById('row-count');
             if (!tbody) return; tbody.innerHTML = '';
             rowCount.textContent = reservations.length;
+            
             const sorted = sortData(reservations);
             sorted.forEach(item => {
                 const tr = document.createElement('tr');
@@ -576,7 +572,7 @@
                     let rawAttach3 = indices.attach3 !== -1 && cells[indices.attach3] ? cells[indices.attach3] : "ー";
 
                     newItems.push({
-                        id: nid, arrival: false, departure: false,
+                        id: nid, arrival: false, departure: false, arrivalTimestamp: null,
                         time: timeVal,
                         bookingNo: indices.bookingNo !== -1 && cells[indices.bookingNo] ? cells[indices.bookingNo].trim() : "ー",
                         company: indices.company !== -1 && cells[indices.company] ? cells[indices.company].trim() : "ー",
@@ -647,18 +643,45 @@
             }
         };
 
-        // 🌟 来店チェック・出発チェック時に確実にクラウドへ即時保存して自動並び替え
+        // 🌟🌟🌟 来店ボタン連動（手元で押した時も即座に音が鳴るように追加） 🌟🌟🌟
         window.toggleArrival = async function(id, checked) { 
             try { 
+                const timestamp = checked ? Date.now() : null;
+                
+                // 🔊 来店チェックが「ON」にされた場合、手元のスピーカーからも即座にピロリ音を発動！
+                if (checked) {
+                    playSynthSound();
+                }
+                
+                // 1. 手元の画面データを即時書き換え（自動最上位ジャンプ）
+                const target = reservations.find(r => r.id === id);
+                if (target) {
+                    target.arrival = checked;
+                    target.arrivalTimestamp = timestamp;
+                    
+                    // リアルタイム検知用キャッシュを今のうちに上書き（他端末からの snap 時に重複音が出ないようにするため）
+                    lastArrivalState[id] = checked;
+                    
+                    renderTable(); 
+                    updateStats();
+                }
+
+                // 2. クラウドデータベースに即時反映
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { 
                     arrival: checked, 
-                    arrivalTimestamp: checked ? Date.now() : null 
+                    arrivalTimestamp: timestamp
                 }); 
             } catch(e){} 
         };
         
         window.toggleDeparture = async function(id, checked) { 
             try { 
+                const target = reservations.find(r => r.id === id);
+                if (target) {
+                    target.departure = checked;
+                    renderTable();
+                    updateStats();
+                }
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { 
                     departure: checked 
                 }); 
@@ -675,6 +698,9 @@
                 if(field=='carNum') v = removeAllSpaces(v);
                 if(field=='attach1' || field=='attach2' || field=='attach3') v = formatAttachValue(v);
                 
+                const target = reservations.find(r => r.id === id);
+                if (target) { target[field] = v; renderTable(); }
+
                 const d = {}; d[field] = v; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), d); 
             } catch(e){}
         };
@@ -717,7 +743,7 @@
                 const attach2Val = formatAttachValue(document.getElementById('add-attach2').value);
 
                 const newItem = {
-                    id: nid, arrival: false, departure: false,
+                    id: nid, arrival: false, departure: false, arrivalTimestamp: null,
                     time: timeVal, bookingNo: bookingNoVal, company: companyVal,
                     name: nameVal, carClass: carClassVal, carType: carTypeVal, carNum: carNumVal,
                     stock: stockVal, memo: memoVal, returnStore: returnStoreVal,
@@ -746,6 +772,7 @@
             document.getElementById('stat-progress-bar').style.width = `${percentage}%`;
         }
 
+        // 電子合成音の発生システム
         function playSynthSound() {
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();

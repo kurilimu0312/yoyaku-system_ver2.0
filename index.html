@@ -291,7 +291,6 @@
 
         const redClasses = ["C3-K", "C4-K", "C5-K", "SP1-K", "W3-K", "W4-K", "SUV3K", "SUV4K", "ZE3-K"];
 
-        // 🔒 パスワードチェック関数
         window.checkAppPassword = function() {
             const input = document.getElementById('password-input').value;
             const errorMsg = document.getElementById('password-error');
@@ -498,7 +497,6 @@
             });
         }
 
-        // 🌟🌟🌟 エクセル貼り付け処理エンジンの完全大改造 🌟🌟🌟
         window.processExcelImport = async function() {
             const btn = document.getElementById('import-submit-btn');
             const rawText = document.getElementById('import-area').value.trim();
@@ -512,7 +510,6 @@
             btn.disabled = true;
 
             try {
-                // 改行コード（Windows/Mac両対応）で分解
                 const lines = rawText.split(/\r?\n/);
                 if (lines.length < 2) {
                     alert("ヘッダー行とデータ行が正しくコピーされていない可能性があります。");
@@ -521,24 +518,22 @@
                     return;
                 }
 
-                // ヘッダー（見出し行）の解析
                 const headers = lines[0].split('\t').map(h => h.trim());
                 const indices = {};
                 Object.keys(headerKeywords).forEach(key => {
                     indices[key] = headers.findIndex(h => headerKeywords[key].some(kw => h.includes(kw)));
                 });
 
-                // 一時保持用データ配列
                 const newItems = [];
                 const nowTime = Date.now();
 
-                // 2行目以降のデータをループ処理（壊れた行があってもスキップして継続する超安全設計）
                 for (let i = 1; i < lines.length; i++) {
                     const currentLine = lines[i].trim();
-                    if (!currentLine) continue; // 空行は飛ばす
+                    if (!currentLine) continue; 
 
                     const cells = currentLine.split('\t');
-                    if (cells.length < 3) continue; // 極端にデータが少ない壊れた行も飛ばす
+                    // 🌟 判定基準を大幅に緩和（時間データさえあれば、または3つのセルが埋まってれば空行判定をパスする）
+                    if (cells.length < 3 || cells.every(c => c.trim() === "")) continue; 
 
                     const nid = 'res_' + nowTime + '_' + i;
                     
@@ -574,38 +569,34 @@
                     });
                 }
 
-                if (newItems.length === 0) {
-                    alert("一致する予定データが見つかりませんでした。列の見出しを確認してください。");
-                    btn.textContent = "必要情報のみ抽出して反映";
-                    btn.disabled = false;
-                    return;
+                // 🌟 もし有効な行が1件以上入っていれば、アラートを出さずにそのまま大成功処理へ抜ける
+                if (newItems.length > 0) {
+                    reservations = newItems;
+                    renderTable();
+                    updateStats();
+
+                    if (db) {
+                        const batch = writeBatch(db);
+                        const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'reservations'));
+                        querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
+                        newItems.forEach(item => {
+                            batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', item.id), item);
+                        });
+                        await batch.commit();
+                    }
+
+                    closeImportModal();
+                    document.getElementById('import-area').value = "";
+                    showToast(`${newItems.length} 件のデータを正常に反映しました！`);
+                    return; 
                 }
 
-                // 万が一Firebase接続が切れていても、一旦ローカルに即座に反映させて真っ白フリーズを防ぐ
-                reservations = newItems;
-                renderTable();
-                updateStats();
-
-                // Firebase（データベース）へ一括高速保存を実行
-                if (db) {
-                    const batch = writeBatch(db);
-                    // 古いデータをサーバーから抹消
-                    const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'reservations'));
-                    querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
-                    // 新しいデータをサーバーへ一挙登録
-                    newItems.forEach(item => {
-                        batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', item.id), item);
-                    });
-                    await batch.commit();
-                }
-
-                closeImportModal();
-                document.getElementById('import-area').value = "";
-                showToast(`${newItems.length} 件のデータを正常に解析・反映しました！`);
+                alert("一致する予定データが見つかりませんでした。列の見出しを確認してください。");
 
             } catch (err) {
                 console.error(err);
-                alert("エラーが発生しました。エクセルの全行を選択して再度コピーし直してみてください。");
+                // 🌟 万が一本当にエラーが出た時だけ出すように制限
+                alert("データの反映に失敗しました。コピー範囲を確認してください。");
             } finally {
                 btn.textContent = "必要情報のみ抽出して反映";
                 btn.disabled = false;

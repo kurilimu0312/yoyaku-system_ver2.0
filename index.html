@@ -36,6 +36,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 min-h-screen font-sans flex flex-col antialiased">
 
+    <!-- Firebase 接続設定 -->
     <script id="firebase-config-script">
         const firebaseConfig = {
             apiKey: "AIzaSyBKPgBROp1b-ONmSOc6qMRozs-_Pm5pbJ0",
@@ -47,6 +48,7 @@
         };
     </script>
 
+    <!-- 🔒 起動時パスワードロック画面 -->
     <div id="lock-screen" class="fixed inset-0 bg-slate-950 flex flex-col items-center justify-center p-4 z-9999">
         <div class="bg-slate-900 border border-slate-800 p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center flex flex-col gap-5">
             <div class="w-16 h-16 rounded-2xl bg-indigo-950 border border-indigo-800 text-indigo-400 flex items-center justify-center text-2xl mx-auto shadow-inner">
@@ -66,7 +68,9 @@
         </div>
     </div>
 
+    <!-- 💻 通常の管理画面 -->
     <div id="admin-view" class="hidden flex-1 flex flex-col transition-opacity duration-300">
+        <!-- ナビゲーションバー -->
         <header class="bg-slate-900 text-white shadow-md border-b border-slate-800 px-6 py-4 shrink-0">
             <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div class="flex items-center gap-3">
@@ -83,12 +87,14 @@
                     </div>
                 </div>
                 
+                <!-- スマホ通知連携ボタン -->
                 <div id="mobile-bell-area" class="hidden md:flex items-center">
                     <button onclick="requestMobileNotification()" class="bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs font-black px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-amber-400">
                         <i class="fa-solid fa-bell animate-bounce"></i> 📲 このスマホの通知をONにする
                     </button>
                 </div>
 
+                <!-- アクションボタン -->
                 <div class="flex items-center gap-2 flex-wrap">
                     <button onclick="forceSyncCloudData()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 cursor-pointer border border-indigo-500">
                         <i class="fa-solid fa-rotate"></i> 🔄 クラウド強制同期
@@ -106,7 +112,9 @@
             </div>
         </header>
 
+        <!-- メインコンテンツ領域 -->
         <main class="flex-1 max-w-7xl w-full mx-auto p-4 md:p-6 flex flex-col gap-6">
+            <!-- カウンター＆進捗率 -->
             <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center gap-4">
                     <div class="w-12 h-12 rounded-xl bg-slate-100 text-slate-700 flex items-center justify-center text-lg shrink-0"><i class="fa-solid fa-list-check"></i></div>
@@ -134,6 +142,7 @@
                 </div>
             </section>
 
+            <!-- メインテーブル -->
             <section class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col flex-1">
                 <div class="p-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
                     <div class="flex items-center gap-2"><span id="table-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span><h2 class="text-xs font-black text-slate-700 tracking-wider uppercase">データシート</h2></div>
@@ -169,6 +178,7 @@
         </main>
     </div>
 
+    <!-- 📥 エクセル貼り付けモーダル -->
     <div id="import-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
         <div class="bg-white w-full max-w-3xl rounded-2xl shadow-2xl p-6 flex flex-col gap-4">
             <h3 class="text-sm font-bold text-slate-800">エクセルデータを貼り付け</h3>
@@ -180,6 +190,7 @@
         </div>
     </div>
 
+    <!-- ➕ 手動新規予約追加用ポップアップフォームモーダル -->
     <div id="add-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 overflow-y-auto">
         <div class="bg-white w-full max-w-lg rounded-2xl shadow-2xl p-6 flex flex-col gap-4 my-8 animate-in fade-in zoom-in duration-200">
             <div class="flex items-center justify-between border-b pb-3">
@@ -232,11 +243,13 @@
                     <input type="text" id="add-returnStore" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center">
                 </div>
                 
+                <!-- 備考欄 -->
                 <div class="col-span-2">
                     <label class="block font-bold text-slate-600 mb-1">備考</label>
                     <input type="text" id="add-memo" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50">
                 </div>
 
+                <!-- 添付品欄 -->
                 <div>
                     <label class="block font-bold text-slate-600 mb-1">添付品1</label>
                     <input type="text" id="add-attach1" placeholder="ー" class="w-full p-2.5 border rounded-xl bg-slate-50 text-center">
@@ -253,6 +266,7 @@
         </div>
     </div>
 
+    <!-- 🧹 クリア確認モーダル -->
     <div id="clear-modal" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50">
         <div class="bg-white max-w-sm w-full rounded-2xl p-6 text-center flex flex-col gap-4">
             <h3 class="font-bold text-slate-800 text-sm">共有データをすべて消去しますか？</h3>
@@ -262,6 +276,7 @@
 
     <div id="toast" class="fixed bottom-6 right-6 bg-slate-900 text-white text-xs font-bold px-4 py-3 rounded-xl shadow-2xl transition transform translate-y-20 opacity-0 pointer-events-none duration-300 z-50"><span id="toast-msg"></span></div>
 
+    <!-- コアロジック -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -291,6 +306,7 @@
 
         const redClasses = ["C3-K", "C4-K", "C5-K", "SP1-K", "W3-K", "W4-K", "SUV3K", "SUV4K", "ZE3-K"];
 
+        // 🔒 パスワードチェック関数
         window.checkAppPassword = function() {
             const input = document.getElementById('password-input').value;
             const errorMsg = document.getElementById('password-error');
@@ -298,7 +314,7 @@
             if (input === CORRECT_PASSWORD) {
                 document.getElementById('lock-screen').classList.add('hidden');
                 document.getElementById('admin-view').classList.remove('hidden');
-                startSystemCore(); 
+                startSystemCore(); // 🌟認証成功時に確実にデータベース通信をスタート
             } else {
                 errorMsg.classList.remove('hidden');
                 document.getElementById('password-input').value = '';
@@ -347,13 +363,14 @@
                 reservations = updated; renderTable(); updateStats();
                 showToast("クラウドと強制同期しました！最新状態です。");
             } catch (error) {
-                // エラーは表示せずスルー
+                // スルー
             } finally {
                 document.getElementById('sync-indicator').className = "text-[10px] text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg font-bold";
                 document.getElementById('sync-indicator').textContent = "クラウド共有LIVE";
             }
         };
 
+        // 🌟🌟🌟 リアルタイム同期（双方向ライブ通信）の確実なスタートコア 🌟🌟🌟
         async function startSystemCore() {
             appId = firebaseConfig.projectId;
             const app = initializeApp(firebaseConfig);
@@ -366,6 +383,8 @@
                 if (user) {
                     const collectionRef = collection(db, 'artifacts', appId, 'public', 'data', 'reservations');
                     if (unsubscribeRealtime) unsubscribeRealtime();
+                    
+                    // 🌟他端末が更新した瞬間、手元の画面も1秒以内に書き換える監視機能
                     unsubscribeRealtime = onSnapshot(collectionRef, (snapshot) => {
                         const updated = [];
                         snapshot.forEach((doc) => { updated.push({ id: doc.id, ...doc.data() }); });
@@ -414,17 +433,23 @@
             return trimmed;
         }
 
+        // 🌟🌟🌟 来店ボタンで上に上げる「全端末共通並び替えルール」の完全復活 🌟🌟🌟
         function sortData(list) {
             return [...list].sort((a, b) => {
+                // 1. 出発済のものは有無を言わさず一番下へ (a:出発済=1, b:出発済=0 なら 1-0=1 でaが下になる)
                 const aDep = a.departure ? 1 : 0; const bDep = b.departure ? 1 : 0;
                 if (aDep !== bDep) return aDep - bDep;
 
+                // 2. 両方とも来店している場合は、「来店ボタンを押した時刻が早い順」で並べる
                 if (a.arrival && b.arrival) {
                     return (a.arrivalTimestamp || 0) - (b.arrivalTimestamp || 0);
                 }
+                
+                // 3. 片方だけ来店している場合は、来店している方を上に上げる
                 if (a.arrival && !b.arrival) return -1;
                 if (!a.arrival && b.arrival) return 1;
 
+                // 4. まだ来店していない同士は、「予約時間の早い順」で綺麗に並べる
                 return cleanTimeFormat(a.time).localeCompare(cleanTimeFormat(b.time));
             });
         }
@@ -497,7 +522,6 @@
             });
         }
 
-        // 🌟🌟🌟 エラー完全自動スルー＆分割一括保存処理 🌟🌟🌟
         window.processExcelImport = async function() {
             const btn = document.getElementById('import-submit-btn');
             const rawText = document.getElementById('import-area').value.trim();
@@ -603,21 +627,19 @@
                             }
                             await insertBatch.commit();
                         } catch (firebaseErr) {
-                            // 🔒 クラウド保存側のエラーが発生しても、画面にはアラートを出さず静かにスルー
                             console.warn("Firebase sync handled silently:", firebaseErr);
                         }
                     }
 
                     closeImportModal();
                     document.getElementById('import-area').value = "";
-                    showToast(`${newItems.length} 件のデータを読み込みました！`);
+                    showToast(`${newItems.length} 件のデータを同期完了しました！`);
                     return; 
                 }
 
                 alert("一致する予定データが見つかりませんでした。列の見出しを確認してください。");
 
             } catch (err) {
-                // 🔒 解析エラーが発生しても画面には出さず、コンソールにのみ記録
                 console.error("Import processing error suppressed:", err);
             } finally {
                 btn.textContent = "必要情報のみ抽出して反映";
@@ -625,8 +647,23 @@
             }
         };
 
-        window.toggleArrival = async function(id, checked) { try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); } catch(e){} };
-        window.toggleDeparture = async function(id, checked) { try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { departure: checked }); } catch(e){} };
+        // 🌟 来店チェック・出発チェック時に確実にクラウドへ即時保存して自動並び替え
+        window.toggleArrival = async function(id, checked) { 
+            try { 
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { 
+                    arrival: checked, 
+                    arrivalTimestamp: checked ? Date.now() : null 
+                }); 
+            } catch(e){} 
+        };
+        
+        window.toggleDeparture = async function(id, checked) { 
+            try { 
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { 
+                    departure: checked 
+                }); 
+            } catch(e){} 
+        };
         
         window.updateField = async function(id, field, value) { 
             try {

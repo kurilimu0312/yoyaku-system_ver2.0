@@ -30,7 +30,7 @@
     </style>
 
     <script>
-        // 🔒 アプリのパスワード設定（今後はここを書き換えるだけで変更できます）
+        // 🔒 アプリのパスワード設定
         const CORRECT_PASSWORD = "0855";
     </script>
 </head>
@@ -175,7 +175,7 @@
             <textarea id="import-area" placeholder="ここにエクセルからコピーした行（ヘッダー行を含む）を貼り付けてください..." class="w-full h-40 p-4 border rounded-xl font-mono text-[11px] bg-slate-50 resize-none"></textarea>
             <div class="flex justify-end gap-2">
                 <button onclick="closeImportModal()" class="px-4 py-2 bg-white border text-slate-700 text-xs font-bold rounded-lg">キャンセル</button>
-                <button onclick="processExcelImport()" class="px-5 py-2 bg-indigo-600 text-white text-xs font-bold rounded-lg shadow-md">必要情報のみ抽出して反映</button>
+                <button type="button" onclick="processExcelImport()" id="import-submit-btn" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-md cursor-pointer transition">必要情報のみ抽出して反映</button>
             </div>
         </div>
     </div>
@@ -498,58 +498,118 @@
             });
         }
 
+        // 🌟🌟🌟 エクセル貼り付け処理エンジンの完全大改造 🌟🌟🌟
         window.processExcelImport = async function() {
+            const btn = document.getElementById('import-submit-btn');
             const rawText = document.getElementById('import-area').value.trim();
-            const lines = rawText.split('\n'); if (lines.length < 2) return;
             
-            const headers = lines[0].split('\t').map(h => h.trim());
-            const indices = {};
-            
-            Object.keys(headerKeywords).forEach(key => {
-                indices[key] = headers.findIndex(h => headerKeywords[key].some(kw => h.includes(kw)));
-            });
-
-            const batch = writeBatch(db);
-            reservations.forEach(r => { batch.delete(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', r.id)); });
-
-            for (let i = 1; i < lines.length; i++) {
-                if (!lines[i].trim()) continue;
-                const cells = lines[i].split('\t');
-                const nid = 'res_' + Date.now() + '_' + i;
-                
-                let timeVal = indices.time !== -1 && cells[indices.time] ? cells[indices.time].trim() : "12:00";
-                if(/^\d{4}$/.test(timeVal)) timeVal = timeVal.substring(0,2) + ":" + timeVal.substring(2,4);
-
-                let stockVal = indices.stock !== -1 && cells[indices.stock] ? cells[indices.stock].trim() : "";
-                if(stockVal === "西口広場前店") stockVal = "広場";
-                if(stockVal === "広場２P" || stockVal === "広場2P") stockVal = "Ｄ";
-
-                let rawCarNum = indices.carNum !== -1 && cells[indices.carNum] ? cells[indices.carNum] : "ー";
-                let carNumVal = removeAllSpaces(rawCarNum);
-
-                let rawAttach1 = indices.attach1 !== -1 && cells[indices.attach1] ? cells[indices.attach1] : "ー";
-                let rawAttach2 = indices.attach2 !== -1 && cells[indices.attach2] ? cells[indices.attach2] : "ー";
-                let rawAttach3 = indices.attach3 !== -1 && cells[indices.attach3] ? cells[indices.attach3] : "ー";
-
-                const item = {
-                    id: nid, arrival: false, departure: false,
-                    time: timeVal,
-                    bookingNo: indices.bookingNo !== -1 && cells[indices.bookingNo] ? cells[indices.bookingNo].trim() : "ー",
-                    company: indices.company !== -1 && cells[indices.company] ? cells[indices.company].trim() : "ー",
-                    name: indices.name !== -1 && cells[indices.name] ? cells[indices.name].trim() : "ー",
-                    carClass: indices.carClass !== -1 && cells[indices.carClass] ? cells[indices.carClass].trim() : "ー",
-                    carType: indices.carType !== -1 && cells[indices.carType] ? cells[indices.carType].trim() : "ー",
-                    carNum: carNumVal,
-                    stock: stockVal,
-                    memo: indices.memo !== -1 && cells[indices.memo] ? cells[indices.memo].trim() : "ー",
-                    returnStore: indices.returnStore !== -1 && cells[indices.returnStore] ? cells[indices.returnStore].trim() : "ー",
-                    attach1: formatAttachValue(rawAttach1),
-                    attach2: formatAttachValue(rawAttach2),
-                    attach3: formatAttachValue(rawAttach3)
-                };
-                batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', nid), item);
+            if (!rawText) {
+                alert("貼り付けエリアが空っぽです。エクセルデータをコピーして貼り付けてください。");
+                return;
             }
-            await batch.commit(); closeImportModal(); document.getElementById('import-area').value = ""; showToast("クラスコードを含む全データをインポートしました！");
+
+            btn.textContent = "⏳ 解析＆同期処理中...";
+            btn.disabled = true;
+
+            try {
+                // 改行コード（Windows/Mac両対応）で分解
+                const lines = rawText.split(/\r?\n/);
+                if (lines.length < 2) {
+                    alert("ヘッダー行とデータ行が正しくコピーされていない可能性があります。");
+                    btn.textContent = "必要情報のみ抽出して反映";
+                    btn.disabled = false;
+                    return;
+                }
+
+                // ヘッダー（見出し行）の解析
+                const headers = lines[0].split('\t').map(h => h.trim());
+                const indices = {};
+                Object.keys(headerKeywords).forEach(key => {
+                    indices[key] = headers.findIndex(h => headerKeywords[key].some(kw => h.includes(kw)));
+                });
+
+                // 一時保持用データ配列
+                const newItems = [];
+                const nowTime = Date.now();
+
+                // 2行目以降のデータをループ処理（壊れた行があってもスキップして継続する超安全設計）
+                for (let i = 1; i < lines.length; i++) {
+                    const currentLine = lines[i].trim();
+                    if (!currentLine) continue; // 空行は飛ばす
+
+                    const cells = currentLine.split('\t');
+                    if (cells.length < 3) continue; // 極端にデータが少ない壊れた行も飛ばす
+
+                    const nid = 'res_' + nowTime + '_' + i;
+                    
+                    let timeVal = indices.time !== -1 && cells[indices.time] ? cells[indices.time].trim() : "12:00";
+                    if(/^\d{4}$/.test(timeVal)) timeVal = timeVal.substring(0,2) + ":" + timeVal.substring(2,4);
+
+                    let stockVal = indices.stock !== -1 && cells[indices.stock] ? cells[indices.stock].trim() : "";
+                    if(stockVal === "西口広場前店") stockVal = "広場";
+                    if(stockVal === "広場２P" || stockVal === "広場2P") stockVal = "Ｄ";
+
+                    let rawCarNum = indices.carNum !== -1 && cells[indices.carNum] ? cells[indices.carNum] : "ー";
+                    let carNumVal = removeAllSpaces(rawCarNum);
+
+                    let rawAttach1 = indices.attach1 !== -1 && cells[indices.attach1] ? cells[indices.attach1] : "ー";
+                    let rawAttach2 = indices.attach2 !== -1 && cells[indices.attach2] ? cells[indices.attach2] : "ー";
+                    let rawAttach3 = indices.attach3 !== -1 && cells[indices.attach3] ? cells[indices.attach3] : "ー";
+
+                    newItems.push({
+                        id: nid, arrival: false, departure: false,
+                        time: timeVal,
+                        bookingNo: indices.bookingNo !== -1 && cells[indices.bookingNo] ? cells[indices.bookingNo].trim() : "ー",
+                        company: indices.company !== -1 && cells[indices.company] ? cells[indices.company].trim() : "ー",
+                        name: indices.name !== -1 && cells[indices.name] ? cells[indices.name].trim() : "ー",
+                        carClass: indices.carClass !== -1 && cells[indices.carClass] ? cells[indices.carClass].trim() : "ー",
+                        carType: indices.carType !== -1 && cells[indices.carType] ? cells[indices.carType].trim() : "ー",
+                        carNum: carNumVal,
+                        stock: stockVal,
+                        memo: indices.memo !== -1 && cells[indices.memo] ? cells[indices.memo].trim() : "ー",
+                        returnStore: indices.returnStore !== -1 && cells[indices.returnStore] ? cells[indices.returnStore].trim() : "ー",
+                        attach1: formatAttachValue(rawAttach1),
+                        attach2: formatAttachValue(rawAttach2),
+                        attach3: formatAttachValue(rawAttach3)
+                    });
+                }
+
+                if (newItems.length === 0) {
+                    alert("一致する予定データが見つかりませんでした。列の見出しを確認してください。");
+                    btn.textContent = "必要情報のみ抽出して反映";
+                    btn.disabled = false;
+                    return;
+                }
+
+                // 万が一Firebase接続が切れていても、一旦ローカルに即座に反映させて真っ白フリーズを防ぐ
+                reservations = newItems;
+                renderTable();
+                updateStats();
+
+                // Firebase（データベース）へ一括高速保存を実行
+                if (db) {
+                    const batch = writeBatch(db);
+                    // 古いデータをサーバーから抹消
+                    const querySnapshot = await getDocs(collection(db, 'artifacts', appId, 'public', 'data', 'reservations'));
+                    querySnapshot.forEach((doc) => { batch.delete(doc.ref); });
+                    // 新しいデータをサーバーへ一挙登録
+                    newItems.forEach(item => {
+                        batch.set(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', item.id), item);
+                    });
+                    await batch.commit();
+                }
+
+                closeImportModal();
+                document.getElementById('import-area').value = "";
+                showToast(`${newItems.length} 件のデータを正常に解析・反映しました！`);
+
+            } catch (err) {
+                console.error(err);
+                alert("エラーが発生しました。エクセルの全行を選択して再度コピーし直してみてください。");
+            } finally {
+                btn.textContent = "必要情報のみ抽出して反映";
+                btn.disabled = false;
+            }
         };
 
         window.toggleArrival = async function(id, checked) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'reservations', id), { arrival: checked, arrivalTimestamp: checked ? Date.now() : null }); };
@@ -585,9 +645,7 @@
             document.getElementById('add-modal').classList.remove('hidden');
         };
 
-        window.closeAddModal = function() {
-            document.getElementById('add-modal').classList.add('hidden');
-        };
+        window.closeAddModal = function() { document.getElementById('add-modal').classList.add('hidden'); };
 
         window.submitNewReservationForm = async function() {
             const nid = 'res_' + Date.now();
